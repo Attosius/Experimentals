@@ -22,14 +22,14 @@ namespace MostUsedWords
             var list = new ConcurrentBag<Dictionary<string, Counter>>();
             var files = Directory.EnumerateFiles(dirPath);
             var sw = Stopwatch.StartNew();
-
+            var regexPattern = $"\\b\\w{{{minLength},}}\\b";
             //var parallelOptions = new ParallelOptions
             //{
             //    MaxDegreeOfParallelism = Environment.ProcessorCount
             //};
             Parallel.ForEach(files, file =>
             {
-                FileRead(file, minLength, list);
+                FileRead(file, regexPattern, list);
             });
             Console.WriteLine($"Elapsed on read: {sw.Elapsed.TotalSeconds: 0.00}");
             foreach (var dict in list)
@@ -73,10 +73,11 @@ namespace MostUsedWords
             return dirPath;
         }
 
-        private static void FileRead(string file, int minLength, ConcurrentBag<Dictionary<string, Counter>> list)
+        private static void FileRead(string file, string regexPattern, ConcurrentBag<Dictionary<string, Counter>> list)
         {
             var dictionary = new Dictionary<string, Counter>();
-            var regex = new Regex(@"\b\w+\b");
+            
+            var regex = new Regex(regexPattern);
             using var f = new StreamReader(file);
             while (!f.EndOfStream)
             {
@@ -89,13 +90,9 @@ namespace MostUsedWords
                 foreach (Match match in matches)
                 {
                     var word = match.Value;
-                    if (word.Length < minLength)
-                    {
-                        continue;
-                    }
                     if (dictionary.TryGetValue(word, out var counter))
                     {
-                        dictionary[word].WordCounter++;
+                        counter.WordCounter++;
                         continue;
                     }
 
