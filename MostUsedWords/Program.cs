@@ -1,45 +1,46 @@
 ﻿using Microsoft.Extensions.Configuration;
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Text.RegularExpressions;
 
 namespace MostUsedWords
 {
 
     class Program
     {
-        static async Task Main(string[] args)
+        public class Counter
+        {
+            public int WordCounter { get; set; }
+        }
+
+        static Task Main(string[] args)
         {
             var dirPath = Initialize(out var minLength);
 
             const int topLines = 10;
-            var dictionary = new ConcurrentDictionary<string, int>();
+            var dictionary = new ConcurrentDictionary<string, Counter>();
             var files = Directory.EnumerateFiles(dirPath);
             var sw = Stopwatch.StartNew();
 
-
-            // simpliest way
-            //Parallel.ForEach(files, file =>
+            //var parallelOptions = new ParallelOptions
             //{
-            //    FileRead(file, minLength, dictionary);
-            //});
-
-
-            var tasks = new List<Task>();
-            foreach (var file in files)
+            //    MaxDegreeOfParallelism = Environment.ProcessorCount
+            //};
+            Parallel.ForEach(files, file =>
             {
-                var task = Task.Factory.StartNew(() => FileRead(file, minLength, dictionary));
-                tasks.Add(task);
-            }
-
-            await Task.WhenAll(tasks);
+                FileRead(file, minLength, dictionary);
+            });
 
 
-            var ordered = dictionary.OrderByDescending(o => o.Value).Take(topLines);
-            var result = ordered.Select(o => $"{o.Key}: {o.Value}");
-            
-            Console.WriteLine($"Elapsed: {sw.Elapsed.TotalSeconds : 0.00}");
+            var ordered = dictionary
+                .OrderByDescending(o => o.Value.WordCounter)
+                .Take(topLines);
+            var result = ordered.Select(o => $"{o.Key}: {o.Value.WordCounter}");
+
+            Console.WriteLine($"Elapsed: {sw.Elapsed.TotalSeconds: 0.00}");
             Console.WriteLine(string.Join(Environment.NewLine, result));
             Console.ReadKey();
+            return Task.CompletedTask;
         }
 
         private static string Initialize(out int minLength)
@@ -48,33 +49,42 @@ namespace MostUsedWords
                 .SetBasePath(AppContext.BaseDirectory)
                 .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
 
-            IConfiguration configuration = builder.Build(); 
+            IConfiguration configuration = builder.Build();
 
             var dirPath = configuration["DirPath"];
             minLength = int.Parse(configuration["MinLength"]);
             return dirPath;
         }
 
-        private static void FileRead(string file, int minLength, ConcurrentDictionary<string, int> dictionary)
+        private static void FileRead(string file, int minLength, ConcurrentDictionary<string, Counter> dictionary)
         {
+            var regex = new Regex(@"\b\w+\b");
             using var f = new StreamReader(file);
             while (!f.EndOfStream)
             {
                 var line = f.ReadLine();
-                var words = line.Split(new[] { " " }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-                foreach (var word in words)
+                if (line == null)
                 {
+                    continue;
+                }
+                var matches = regex.Matches(line);
+                foreach (Match match in matches)
+                {
+                    var word = match.Value;
                     if (word.Length < minLength)
                     {
                         continue;
                     }
-                    if (dictionary.TryGetValue(word, out var count))
+                    if (dictionary.TryGetValue(word, out var counter))
                     {
-                        dictionary[word] = count + 1;
+                        dictionary[word].WordCounter++;
                         continue;
                     }
 
-                    dictionary[word] = 1;
+                    dictionary[word] = new Counter
+                    {
+                        WordCounter = 1
+                    };
                 }
             }
         }
