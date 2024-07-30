@@ -18,7 +18,8 @@ namespace MostUsedWords
             var dirPath = Initialize(out var minLength);
 
             const int topLines = 10;
-            var dictionary = new ConcurrentDictionary<string, Counter>();
+            var dictionary = new Dictionary<string, Counter>();
+            var list = new ConcurrentBag<Dictionary<string, Counter>>();
             var files = Directory.EnumerateFiles(dirPath);
             var sw = Stopwatch.StartNew();
 
@@ -28,9 +29,25 @@ namespace MostUsedWords
             //};
             Parallel.ForEach(files, file =>
             {
-                FileRead(file, minLength, dictionary);
+                FileRead(file, minLength, list);
             });
+            Console.WriteLine($"Elapsed on read: {sw.Elapsed.TotalSeconds: 0.00}");
+            foreach (var dict in list)
+            {
+                foreach (var kv in dict)
+                {
+                    if (dictionary.TryGetValue(kv.Key, out var val))
+                    {
+                        dictionary[kv.Key].WordCounter = val.WordCounter + kv.Value.WordCounter;
+                    }
+                    else
+                    {
 
+                        dictionary[kv.Key] = kv.Value;
+                    }
+
+                }
+            }
 
             var ordered = dictionary
                 .OrderByDescending(o => o.Value.WordCounter)
@@ -56,8 +73,9 @@ namespace MostUsedWords
             return dirPath;
         }
 
-        private static void FileRead(string file, int minLength, ConcurrentDictionary<string, Counter> dictionary)
+        private static void FileRead(string file, int minLength, ConcurrentBag<Dictionary<string, Counter>> list)
         {
+            var dictionary = new Dictionary<string, Counter>();
             var regex = new Regex(@"\b\w+\b");
             using var f = new StreamReader(file);
             while (!f.EndOfStream)
@@ -87,6 +105,8 @@ namespace MostUsedWords
                     };
                 }
             }
+
+            list.Add(dictionary);
         }
     }
 }
