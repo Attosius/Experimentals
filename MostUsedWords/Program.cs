@@ -12,6 +12,7 @@ namespace MostUsedWords
         {
             public int WordCounter { get; set; }
         }
+        //static Regex regex;
 
         static Task Main(string[] args)
         {
@@ -23,10 +24,9 @@ namespace MostUsedWords
             var files = Directory.EnumerateFiles(dirPath);
             var sw = Stopwatch.StartNew();
             var regexPattern = $"\\b\\w{{{minLength},}}\\b";
-            //var parallelOptions = new ParallelOptions
-            //{
-            //    MaxDegreeOfParallelism = Environment.ProcessorCount
-            //};
+            //regex = new Regex(regexPattern, RegexOptions.Compiled);
+            
+
             Parallel.ForEach(files, file =>
             {
                 FileRead(file, regexPattern, list);
@@ -77,7 +77,7 @@ namespace MostUsedWords
         {
             var dictionary = new Dictionary<string, Counter>();
             
-            var regex = new Regex(regexPattern);
+            var regex = new Regex(regexPattern, RegexOptions.Compiled);
             using var f = new StreamReader(file);
             while (!f.EndOfStream)
             {
