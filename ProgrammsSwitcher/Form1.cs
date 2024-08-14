@@ -1,6 +1,8 @@
 using System.Diagnostics;
+using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Windows.Forms;
 
 namespace ProgrammsSwitcher
 {
@@ -30,19 +32,92 @@ namespace ProgrammsSwitcher
 
         // Константы для сообщений
         private const uint WM_CLOSE = 0x0010;
+        private NotifyIcon notifyIcon;
+        private ContextMenuStrip contextMenu;
 
         public Form1()
         {
             InitializeComponent();
+            InitializeTrayIcon();
             Refresh();
         }
+        private void InitializeTrayIcon()
+        {
+            var isOn = Refresh();
+            // Инициализация NotifyIcon
+            notifyIcon = new NotifyIcon
+            {
+                Icon = isOn ? SystemIcons.WinLogo : SystemIcons.Error, // Установите иконку, можете заменить на свою
+                Visible = true,
+                Text = "Включатель" // Текст подсказки
+            };
+            UpdateIcon(isOn);
 
+            // Инициализация контекстного меню
+            contextMenu = new ContextMenuStrip();
+            contextMenu.Items.Add("Развернуть", null, onRestore_Click);
+            contextMenu.Items.Add("Закрыть", null, onExit_Click);
+            contextMenu.Items.Add("Включить", null, btnOn_Click);
+            contextMenu.Items.Add("Выключить", null, btnOff_Click);
+
+            // Привязка контекстного меню к NotifyIcon
+            notifyIcon.ContextMenuStrip = contextMenu;
+
+            // Подписка на события
+            notifyIcon.DoubleClick += onNotifyIcon_DoubleClick;
+        }
+        // Обработчик двойного клика на иконке
+        private void onNotifyIcon_DoubleClick(object sender, EventArgs e)
+        {
+            Restore(); // Разворачивает окно
+        }
+
+        // Обработчик клика "Развернуть" в контекстном меню
+        private void onRestore_Click(object sender, EventArgs e)
+        {
+            Restore(); // Разворачивает окно
+        }
+
+        // Обработчик клика "Закрыть" в контекстном меню
+        private void onExit_Click(object sender, EventArgs e)
+        {
+            notifyIcon.Visible = false; // Убираем значок из трея перед закрытием
+            Application.Exit(); // Закрываем приложение
+        }
+
+        // Метод для восстановления окна
+        private void Restore()
+        {
+            this.Show(); // Показываем окно
+            this.WindowState = FormWindowState.Normal; // Устанавливаем нормальное состояние
+            this.Activate(); // Активируем окно
+        }
+
+        // Обработка события "Свернуть" окна
+        protected override void OnResize(EventArgs e)
+        {
+            base.OnResize(e);
+            if (this.WindowState == FormWindowState.Minimized)
+            {
+                this.Hide(); // Скрываем окно, когда оно свернуто
+            }
+        }
+
+        private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            // Предотвращаем закрытие приложения, если оно свёрнуто
+            if (e.CloseReason == CloseReason.UserClosing && this.WindowState == FormWindowState.Minimized)
+            {
+                e.Cancel = true; // Отменяем событие закрытия
+                this.Hide(); // Скрываем окно
+            }
+        }
         private void btnRefresh_Click(object sender, EventArgs e)
         {
             Refresh();
         }
 
-        private void Refresh()
+        private bool Refresh()
         {
             Process? process = GetWinProcess();
             this.lblWinStatus.Text = process == null ? "OFF" : "ON";
@@ -52,6 +127,7 @@ namespace ProgrammsSwitcher
             //List<string> windowTitles = new List<string>();
             var cmdPtr = GetCmdPtr();
             this.lblCmdStatus.Text = cmdPtr == IntPtr.Zero ? "OFF" : "ON";
+            return process != null && cmdPtr != IntPtr.Zero;
         }
 
         private static IntPtr GetCmdPtr()
@@ -126,7 +202,8 @@ namespace ProgrammsSwitcher
             }
             // Имитация длительной операции
             await Task.Delay(500); // Задержка в 5 секунд
-            Refresh();
+            var isOn = Refresh();
+            UpdateIcon(isOn);
         }
 
         private async void btnOff_Click(object sender, EventArgs e)
@@ -137,7 +214,8 @@ namespace ProgrammsSwitcher
                 process.Close();
                 process = GetWinProcess();
                 this.lblWinStatus.Text = process == null ? "Closed" : "Tring to closing";
-            }else
+            }
+            else
             {
                 this.lblWinStatus.Text = "Not found";
             }
@@ -151,18 +229,25 @@ namespace ProgrammsSwitcher
                 if (result)
                 {
                     this.lblCmdStatus.Text = "Closed";
-                }else
+                }
+                else
                 {
                     this.lblCmdStatus.Text = "Tring to closing";
                 }
             }
             await Task.Delay(500);
-            Refresh();
+            var isOn = Refresh();
+            UpdateIcon(isOn);
 
             //var timer = new System.Windows.Forms.Timer(1000); // 1000 миллисекунд = 1 секунда
             //timer.Elapsed += Timer_Elapsed;
             //timer.AutoReset = false; // Устанавливаем так, чтобы таймер не перезапускался автоматически
             //timer.Enabled = true; // Запускаем таймер
+        }
+
+        private void UpdateIcon(bool isOn)
+        {
+            notifyIcon.Icon = isOn ? SystemIcons.Information : SystemIcons.Error;
         }
 
         private void Timer_Elapsed(object? sender, System.Timers.ElapsedEventArgs e)
