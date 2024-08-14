@@ -3,7 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.10.35013.160
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MostUsedWords", "MostUsedWords\MostUsedWords.csproj", "{B3A2763B-0B23-4A46-96A9-F42E95DA938D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MostUsedWords", "MostUsedWords\MostUsedWords.csproj", "{B3A2763B-0B23-4A46-96A9-F42E95DA938D}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NetTests", "NetTests\NetTests.csproj", "{0A94AC7B-4C2E-4A41-8AF2-9D66D7244D93}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProgrammsSwitcher", "ProgrammsSwitcher\ProgrammsSwitcher.csproj", "{F58AE19E-B46D-4BAA-92E8-BF3A73CC679F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +19,14 @@ Global
 		{B3A2763B-0B23-4A46-96A9-F42E95DA938D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B3A2763B-0B23-4A46-96A9-F42E95DA938D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B3A2763B-0B23-4A46-96A9-F42E95DA938D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0A94AC7B-4C2E-4A41-8AF2-9D66D7244D93}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0A94AC7B-4C2E-4A41-8AF2-9D66D7244D93}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0A94AC7B-4C2E-4A41-8AF2-9D66D7244D93}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0A94AC7B-4C2E-4A41-8AF2-9D66D7244D93}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F58AE19E-B46D-4BAA-92E8-BF3A73CC679F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F58AE19E-B46D-4BAA-92E8-BF3A73CC679F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F58AE19E-B46D-4BAA-92E8-BF3A73CC679F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F58AE19E-B46D-4BAA-92E8-BF3A73CC679F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
