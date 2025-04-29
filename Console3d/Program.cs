@@ -39,6 +39,10 @@
             out uint lpNumberOfCharsWritten
         );
 
+        [DllImport("user32.dll")]
+        static extern short GetAsyncKeyState(int vKey);
+
+
         // Structures for COORD
         [StructLayout(LayoutKind.Sequential)]
         public struct COORD
@@ -61,15 +65,21 @@
         static int nScreenWidth = 120; // Ширина консольного окна
         static int nScreenHeight = 40; // Высота консольного окна
     
-        static float fPlayerX = 1.0f; // Координата игрока по оси X
-        static float fPlayerY = 1.0f; // Координата игрока по оси Y
-        static float fPlayerA = 0.0f; // Направление игрока
-      
+        static double fPlayerX = 5.0f; // Координата игрока по оси X
+        static double fPlayerY = 7.0f; // Координата игрока по оси Y
+        static double fPlayerA = 0.0f; // Направление игрока
+
+        static double dirX = 5.0f; // Координата игрока по оси X
+        static double dirY = 7.0f; // Координата игрока по оси Y
+
+
         static int nMapHeight = 16; // Высота игрового поля
         static int nMapWidth = 16;  // Ширина игрового поля
        
         static double fFOV = 3.14159 / 3; // Угол обзора (поле видимости)
         static float fDepth = 30.0f;     // Максимальная дистанция обзора
+        static double fTurn = 5.0f;			// Walking Speed
+        static double fSpeed = 5.0f;			// Walking Speed
 
         public static void Main(string[] args)
         {
@@ -172,13 +182,102 @@
             map += "#..............#";
             map += "################";
 
+            for (int ny = 0; ny < screen.Length; ny++)
+            {
+                // screen[ny] = '+';
+            }
+
+            dwBytesWritten = WriteInConsole(hConsole, coord, screen, map);
+            var sw = Stopwatch.StartNew();
+            while (true) // Игровой цикл
+            {
+                var elapsed = sw.ElapsedMilliseconds / (double)1000;
+                Debug.Write(elapsed.ToString());
+                sw.Restart();
+                //Thread.Sleep(10);
+                short keyState = GetAsyncKeyState('A');
+
+                if ((GetAsyncKeyState('A') & 0x8000) != 0)
+                {
+                    fPlayerA -= fTurn * (0.75f) * elapsed;
+                }
+                if ((GetAsyncKeyState('D') & 0x8000) != 0)
+                {
+                    fPlayerA += fTurn * (0.75f) * elapsed;
+                }
+
+                Debug.WriteLine($" fPlayerA: {fPlayerA:0.000}, sin: {Math.Sin(fPlayerA):0.000}, cos: {Math.Cos(fPlayerA):0.000}");
+                Debug.WriteLine($" X {fPlayerX:0.000} => {Math.Sin(fPlayerA) * 5f * elapsed:0.000}");
+                Debug.WriteLine($" Y {fPlayerY:0.000} => {Math.Cos(fPlayerA) * 5f * elapsed:0.000}");
+                dirX = fPlayerX + Math.Sin(fPlayerA) * 2;
+                dirY = fPlayerY + Math.Cos(fPlayerA) * 2;
+                Debug.WriteLine($" DirX {dirX:0.000}");
+                Debug.WriteLine($" DirY {dirY:0.000}");
+                Debug.WriteLine($"-------------------");
+
+                if ((GetAsyncKeyState('W') & 0x8000) != 0)
+                {
+                    fPlayerX += Math.Sin(fPlayerA) * 5f * elapsed;
+                    fPlayerY += Math.Cos(fPlayerA) * 5f * elapsed;
+
+                    int indexInMap = ((int)fPlayerX * nMapWidth) + (int)(fPlayerY);
+                    if (map.Length > indexInMap && map[indexInMap] == '#')
+                    {
+                        fPlayerX -= Math.Sin(fPlayerA) * 5f * elapsed;
+                        fPlayerY -= Math.Cos(fPlayerA) * 5f * elapsed;
+                    }
+                }
+
+
+                if ((GetAsyncKeyState('S') & 0x8000) != 0)
+                {
+                    fPlayerX -= Math.Sin(fPlayerA) * 5f * elapsed;
+                    fPlayerY -= Math.Cos(fPlayerA) * 5f * elapsed;
+
+                    int indexInMap = ((int)fPlayerX * nMapWidth) + (int)(fPlayerY);
+                    if (map.Length > indexInMap && map[indexInMap] == '#')
+                    {
+                        fPlayerX += Math.Sin(fPlayerA) * 5f * elapsed;
+                        fPlayerY += Math.Cos(fPlayerA) * 5f * elapsed;
+                    }
+                }
+                if (fPlayerX > nScreenWidth)
+                {
+                    fPlayerX = nScreenWidth;
+                }
+                if (fPlayerY > nScreenHeight)
+                {
+                    fPlayerY = nScreenHeight;
+                }
+
+                WriteInConsole(hConsole, coord, screen, map);
+            }
+
+
+            CloseHandle(hConsole);  // Close the new buffer's handle when you're done.
+        }
+
+        private static uint WriteInConsole(nint hConsole, COORD coord, char[] screen, string map)
+        {
+            uint dwBytesWritten;
+            for (int nx = 0; nx < nMapWidth; nx++)
+                for (int ny = 0; ny < nMapWidth; ny++)
+                {
+                    screen[(nx * nScreenWidth) + (ny)] = map[(nx * nMapWidth) + (ny)];
+                }
+
+            //screen[((int)fPlayerX * nScreenWidth) + ((int)fPlayerY)] = 'P';
+            screen[((int)fPlayerX * nScreenWidth) + ((int)fPlayerY)] = 'P';
+            screen[((int)(dirX) * nScreenWidth) + ((int)dirY)] = 'X';
+
+
             //for (int nx = 0; nx < nMapWidth; nx++)
             //    for (int ny = 0; ny < nMapWidth; ny++)
             //    {
             //        screen[(ny + 1) * nScreenWidth + nx] = map[ny * nMapWidth + nx];
             //    }
 
-            screen[((int)fPlayerX + 1) * nScreenWidth + (int)fPlayerY] = 'P';
+            //screen[((int)fPlayerX + 1) * nScreenWidth + (int)fPlayerY] = 'P';
 
             WriteConsoleOutputCharacter(
                 hConsole,
@@ -187,17 +286,7 @@
                 coord,
                 out dwBytesWritten
             );
-            //while (true) // Игровой цикл
-            {
-                // Повторяющиеся действия
-            }
-            Console.ReadKey(); // Keep the window open
-
-            // Clean up:  Revert to original buffer (optional but recommended)
-            // You'd need to store the handle of the original buffer to revert.
-
-            //CloseHandle(hConsole);  // Close the new buffer's handle when you're done.
-            //Otherwise you get a resource leak
+            return dwBytesWritten;
         }
     }
 
