@@ -62,8 +62,8 @@
         // Constants for dwFlags (screen buffer flags)
         const uint CONSOLE_TEXTMODE_BUFFER = 1;
 
-        static int nScreenWidth = 120; // Ширина консольного окна
-        static int nScreenHeight = 40; // Высота консольного окна
+        static int nScreenWidth = 120; // Ширина консольного окна X
+        static int nScreenHeight = 40; // Высота консольного окна Y
     
         static double fPlayerX = 5.0f; // Координата игрока по оси X
         static double fPlayerY = 7.0f; // Координата игрока по оси Y
@@ -261,14 +261,16 @@
         {
             uint dwBytesWritten;
             for (int nx = 0; nx < nMapWidth; nx++)
+            {
                 for (int ny = 0; ny < nMapWidth; ny++)
                 {
-                    screen[(nx * nScreenWidth) + (ny)] = map[(nx * nMapWidth) + (ny)];
+                    screen[(ny * nScreenWidth) + (nx)] = map[(ny * nMapWidth) + (nx)];
                 }
+            }
 
+            screen[((int)fPlayerY * nScreenWidth) + ((int)fPlayerX)] = 'P';
             //screen[((int)fPlayerX * nScreenWidth) + ((int)fPlayerY)] = 'P';
-            screen[((int)fPlayerX * nScreenWidth) + ((int)fPlayerY)] = 'P';
-            screen[((int)(dirX) * nScreenWidth) + ((int)dirY)] = 'X';
+            screen[((int)(dirY) * nScreenWidth) + ((int)dirX)] = 'X';
 
 
             //for (int nx = 0; nx < nMapWidth; nx++)
