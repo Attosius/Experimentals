@@ -40,6 +40,20 @@
             out uint lpNumberOfCharsWritten
         );
 
+        [DllImport("kernel32.dll", SetLastError = true)]
+        static extern bool SetConsoleScreenBufferSize(IntPtr hConsoleOutput, COORD dwSize);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        static extern bool SetConsoleWindowInfo(IntPtr hConsoleOutput, bool bAbsolute, ref SMALL_RECT lpConsoleWindow);
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct SMALL_RECT
+        {
+            public short Left;
+            public short Top;
+            public short Right;
+            public short Bottom;
+        }
         [DllImport("user32.dll")]
         static extern short GetAsyncKeyState(int vKey);
 
@@ -122,29 +136,42 @@
                 CloseHandle(hConsole);
                 return;
             }
-            Console.WriteLine("New console screen buffer created and activated!");
+
+            // Set the buffer size
+            COORD bufferSize = new COORD { X = (short)nScreenWidth, Y = (short)nScreenHeight };
+            if (!SetConsoleScreenBufferSize(hConsole, bufferSize))
+            {
+                Console.WriteLine("Failed to set console screen buffer size. Error code: " + Marshal.GetLastWin32Error());
+                CloseHandle(hConsole);
+                return;
+            }
+
+            // Set the window size
+            SMALL_RECT windowSize = new SMALL_RECT { Left = 0, Top = 0, Right = (short)(nScreenWidth - 1), Bottom = (short)(nScreenHeight - 1) }; //Important to subtract 1 from width and height
+            if (!SetConsoleWindowInfo(hConsole, true, ref windowSize))
+            {
+                Console.WriteLine("Failed to set console window info. Error code: " + Marshal.GetLastWin32Error());
+                CloseHandle(hConsole);
+                return;
+            }
+
+            // Set the new screen buffer as the active one
+            if (!SetConsoleActiveScreenBuffer(hConsole))
+            {
+                Console.WriteLine("Failed to set active screen buffer. Error code: " + Marshal.GetLastWin32Error());
+                CloseHandle(hConsole);
+                return;
+            }
+
+
+            Debug.WriteLine("New console screen buffer created and activated!");
 
             // Write something to the new buffer using WriteConsoleOutputCharacter
             COORD coord = new COORD { X = 0, Y = 0 }; // Write at column 10, row 5
             string textToWrite = "Hello from WriteConsoleOutputCharacter!";
             uint charsWritten;
 
-            //bool writeSuccess = WriteConsoleOutputCharacter(
-            //    hConsole,
-            //    textToWrite,
-            //    (uint)textToWrite.Length,
-            //    coord,
-            //    out charsWritten
-            //);
 
-            //if (!writeSuccess)
-            //{
-            //    Console.WriteLine("Failed to write to console buffer. Error code: " + Marshal.GetLastWin32Error());
-            //}
-            //else
-            //{
-            //    Console.WriteLine($"Successfully wrote {charsWritten} characters to the console buffer.");
-            //}
 
             var screen = new char[nScreenWidth * nScreenHeight + 1]; // Массив для записи в буфер
             uint dwBytesWritten = 0; // Для дебага
@@ -179,7 +206,7 @@
             string map = string.Empty; // Строковый массив
             map += "################";
             map += "#..............#";
-            map += "#..............#";
+            map += "#.###########..#";
             map += "#..............#";
             map += "#..............#";
             map += "#..............#";
@@ -253,14 +280,14 @@
                         fPlayerY += Math.Cos(fPlayerA) * 5f * elapsed;
                     }
                 }
-                if (fPlayerX > nScreenWidth)
-                {
-                    fPlayerX = nScreenWidth;
-                }
-                if (fPlayerY > nScreenHeight)
-                {
-                    fPlayerY = nScreenHeight;
-                }
+                //if (fPlayerX > nScreenWidth)
+                //{
+                //    fPlayerX = nScreenWidth;
+                //}
+                //if (fPlayerY > nScreenHeight)
+                //{
+                //    fPlayerY = nScreenHeight;
+                //}
                 for (int x = 0; x < nScreenWidth; x++)  // Проходим по всем X
                 {
                     double fRayAngle = (fPlayerA - fFOV / 2.0d) + (fFOV / nScreenWidth) * x; // short part of FOV angle //((double)x / nScreenWidth) * fFOV;
@@ -316,11 +343,11 @@
 
                     for (int y = 0; y < nScreenHeight; y++)
                     {
-                        if (y < nCeiling)
+                        if (y <= nCeiling)
                         {
                             screen[y * nScreenWidth + x] = Colors.Black;
                         }
-                        else if (y > nCeiling && y < nFloor)
+                        else if (y > nCeiling && y <= nFloor)
                         {
                             screen[y * nScreenWidth + x] = nShade;
                         }else
