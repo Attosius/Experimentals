@@ -3,6 +3,7 @@
     using System;
     using System.Diagnostics;
     using System.Drawing;
+    using System.Runtime.CompilerServices;
     using System.Runtime.InteropServices;
     using static Console3d.ConsoleScreenBuffer;
 
@@ -171,13 +172,13 @@
             map += "#..............#";
             map += "#..............#";
             map += "#..............#";
+            map += "#..##...###....#";
+            map += "#..............#";
+            map += "#........#.....#";
+            map += "#........#.....#";
             map += "#..............#";
             map += "#..............#";
-            map += "#..............#";
-            map += "#..............#";
-            map += "#..............#";
-            map += "#..............#";
-            map += "#..............#";
+            map += "#...###...##...#";
             map += "#..............#";
             map += "#..............#";
             map += "################";
@@ -249,7 +250,99 @@
                 {
                     fPlayerY = nScreenHeight;
                 }
+                for (int x = 0; x < nScreenWidth; x++)  // Проходим по всем X
+                {
+                    double fRayAngle = (fPlayerA - fFOV / 2.0d) + (fFOV / nScreenWidth) * x; // short part of FOV angle //((double)x / nScreenWidth) * fFOV;
+                    //Debug.WriteLine($" fRayAngle {fRayAngle:0.000}, fPlayerA: {fPlayerA:0.000}");
 
+                    double fDistanceToWall = 0.0d; // Расстояние до препятствия в направлении fRayAngle
+                    bool bHitWall = false; // Достигнул ли луч стенку
+
+                    double fEyeX = Math.Sin(fRayAngle); // Координаты единичного вектора fRayAngle
+                    double fEyeY = Math.Cos(fRayAngle);
+
+                    while(!bHitWall && fDistanceToWall < fDepth)
+                    {
+                        fDistanceToWall += 0.1d;
+                        int testX = Convert.ToInt32(fPlayerX + fEyeX * fDistanceToWall);
+                        int testY = Convert.ToInt32(fPlayerY + fEyeY * fDistanceToWall);
+                        if (testX < 0 || testX >= nMapWidth || testY < 0 || testY >= nMapHeight)
+                        {
+                            bHitWall = true;
+                            fDistanceToWall = fDepth;
+                        } else if (map[testY * nMapWidth + testX] == '#')
+                        {
+                            bHitWall = true;
+                            //
+                        }
+                    }
+                    // has distance to wall in short part of FOV
+                    // coord sky and floor
+                    int nCeiling = Convert.ToInt32((nScreenHeight / 2) - (nScreenHeight / fDistanceToWall));
+                    int nFloor = nScreenHeight - nCeiling;
+
+                    short nShade = 0;
+
+                    if (fDistanceToWall <= fDepth / 3d)
+                    {
+                        nShade = (short)'1';
+                    }
+                    else if (fDistanceToWall < fDepth / 2d)
+                    {
+                        nShade = (short)'2';
+                    }
+                    else if (fDistanceToWall < fDepth / 1.5d)
+                    {
+                        nShade = (short)'3';
+                    }
+                    else if (fDistanceToWall < fDepth)
+                    {
+                        nShade = (short)'4';
+                    }
+                    else
+                    {
+                        nShade = (short)'5';
+                    }
+
+                    for (int y = 0; y < nScreenHeight; y++)
+                    {
+                        if (y < nCeiling)
+                        {
+                            screen[y * nScreenWidth + x] = '6';
+                        }else if (y > nCeiling && y < nFloor)
+                        {
+                            screen[y * nScreenWidth + x] = (char)nShade;
+                        }else
+                        {
+                            double b = 1d - (y - nScreenHeight / 2.0) / (nScreenHeight / 2.0);
+                            if (b < 0.25)
+                            {
+                                nShade = (short)'#';
+                            }
+                            else if (b < 0.5)
+                            {
+                                nShade = (short)'x';
+                            }
+                            else if (b < 0.75)
+                            {
+                                nShade = (short)'~';
+                            }
+                            else if (b < 0.9)
+                            {
+                                nShade = (short)'-';
+                            }else
+                            {
+                                nShade = (short)'7';
+                            }
+
+
+
+                            screen[y * nScreenWidth + x] = (char)nShade; ;
+                        }
+                    }
+
+
+                }
                 WriteInConsole(hConsole, coord, screen, map);
             }
 
