@@ -52,6 +52,17 @@
             public short Y;
         }
 
+        public static class Colors
+        {
+            public static char None = ' ';
+            public static char White = '\u2588';
+            public static char Light = '\u2593';
+            public static char Gray = '\u2592';
+            public static char Dark = '\u2591';
+            public static char Black = ' ';
+            public static char WhiteHalf = '\u2590';
+        }
+
         // Constants for dwDesiredAccess (access rights)
         const uint GENERIC_READ = 0x80000000;
         const uint GENERIC_WRITE = 0x40000000;
@@ -281,63 +292,63 @@
                     int nCeiling = Convert.ToInt32((nScreenHeight / 2) - (nScreenHeight / fDistanceToWall));
                     int nFloor = nScreenHeight - nCeiling;
 
-                    short nShade = 0;
-
+                    char nShade = Colors.Black;
                     if (fDistanceToWall <= fDepth / 3d)
                     {
-                        nShade = (short)'1';
+                        nShade = Colors.White;
                     }
                     else if (fDistanceToWall < fDepth / 2d)
                     {
-                        nShade = (short)'2';
+                        nShade = Colors.Light;
                     }
                     else if (fDistanceToWall < fDepth / 1.5d)
                     {
-                        nShade = (short)'3';
+                        nShade = Colors.Gray;
                     }
                     else if (fDistanceToWall < fDepth)
                     {
-                        nShade = (short)'4';
+                        nShade = Colors.Dark;
                     }
                     else
                     {
-                        nShade = (short)'5';
+                        nShade = Colors.Black;
                     }
 
                     for (int y = 0; y < nScreenHeight; y++)
                     {
                         if (y < nCeiling)
                         {
-                            screen[y * nScreenWidth + x] = '6';
-                        }else if (y > nCeiling && y < nFloor)
+                            screen[y * nScreenWidth + x] = Colors.Black;
+                        }
+                        else if (y > nCeiling && y < nFloor)
                         {
-                            screen[y * nScreenWidth + x] = (char)nShade;
+                            screen[y * nScreenWidth + x] = nShade;
                         }else
                         {
                             double b = 1d - (y - nScreenHeight / 2.0) / (nScreenHeight / 2.0);
                             if (b < 0.25)
                             {
-                                nShade = (short)'#';
+                                nShade = '#';
                             }
                             else if (b < 0.5)
                             {
-                                nShade = (short)'x';
+                                nShade = 'x';
                             }
                             else if (b < 0.75)
                             {
-                                nShade = (short)'~';
+                                nShade = '~';
                             }
                             else if (b < 0.9)
                             {
-                                nShade = (short)'-';
+                                nShade = '-';
                             }else
                             {
-                                nShade = (short)'7';
+                                nShade = Colors.Black;
                             }
 
 
 
-                            screen[y * nScreenWidth + x] = (char)nShade; ;
+                            screen[y * nScreenWidth + x] = nShade; ;
                         }
                     }
 
@@ -357,7 +368,7 @@
             {
                 for (int ny = 0; ny < nMapWidth; ny++)
                 {
-                    screen[(ny * nScreenWidth) + (nx)] = map[(ny * nMapWidth) + (nx)];
+                    screen[((ny+1) * nScreenWidth) + (nx)] = map[(ny * nMapWidth) + (nx)];
                 }
             }
 
