@@ -91,8 +91,8 @@
         static int nScreenWidth = 120; // Ширина консольного окна X
         static int nScreenHeight = 40; // Высота консольного окна Y
     
-        static double fPlayerX = 5.0f; // Координата игрока по оси X
-        static double fPlayerY = 7.0f; // Координата игрока по оси Y
+        static double fPlayerX = 3.0f; // Координата игрока по оси X
+        static double fPlayerY = 3.0f; // Координата игрока по оси Y
         static double fPlayerA = 0.0f; // Направление игрока
 
         static double dirX = 5.0f; // Координата игрока по оси X
@@ -204,19 +204,19 @@
 
 
             string map = string.Empty; // Строковый массив
-            map += "################";
-            map += "#..............#";
-            map += "#.###########..#";
-            map += "#..............#";
-            map += "#..............#";
-            map += "#..............#";
-            map += "#..##...###....#";
-            map += "#..............#";
-            map += "#........#.....#";
-            map += "#........#.....#";
+            map += "################"; // 1
+            map += "#..............#";// 2
+            map += "#..............#";// 3
+            map += "#..............#";// 4
+            map += "#..............#";// 5
+            map += "#..............#";// 6
+            map += "#..#...........#";// 7
             map += "#..............#";
             map += "#..............#";
-            map += "#...###...##...#";
+            map += "#..............#";
+            map += "#..............#";
+            map += "#..............#";
+            map += "#..............#";
             map += "#..............#";
             map += "#..............#";
             map += "################";
@@ -280,30 +280,31 @@
                         fPlayerY += Math.Cos(fPlayerA) * 5f * elapsed;
                     }
                 }
-                //if (fPlayerX > nScreenWidth)
-                //{
-                //    fPlayerX = nScreenWidth;
-                //}
-                //if (fPlayerY > nScreenHeight)
-                //{
-                //    fPlayerY = nScreenHeight;
-                //}
-                for (int x = 0; x < nScreenWidth; x++)  // Проходим по всем X
+
+                int lastX = -1;
+                int lastY = -1;
+                for (int x = 0; x < nScreenWidth; x++)  // Проходим по всем X в зоне видимости
                 {
                     double fRayAngle = (fPlayerA - fFOV / 2.0d) + (fFOV / nScreenWidth) * x; // short part of FOV angle //((double)x / nScreenWidth) * fFOV;
                     //Debug.WriteLine($" fRayAngle {fRayAngle:0.000}, fPlayerA: {fPlayerA:0.000}");
 
                     double fDistanceToWall = 0.0d; // Расстояние до препятствия в направлении fRayAngle
                     bool bHitWall = false; // Достигнул ли луч стенку
+                    bool bBoundary = false;		// Set when ray hits boundary between two wall blocks
+                    bool bBoundary2 = false;		// Set when ray hits boundary between two wall blocks
 
                     double fEyeX = Math.Sin(fRayAngle); // Координаты единичного вектора fRayAngle
                     double fEyeY = Math.Cos(fRayAngle);
 
-                    while(!bHitWall && fDistanceToWall < fDepth)
+                    int testX = 0;
+                    int testY = 0;
+                    double dTestx = 0;
+                    while (!bHitWall && fDistanceToWall < fDepth)
                     {
-                        fDistanceToWall += 0.1d;
-                        int testX = Convert.ToInt32(fPlayerX + fEyeX * fDistanceToWall);
-                        int testY = Convert.ToInt32(fPlayerY + fEyeY * fDistanceToWall);
+                        fDistanceToWall += 0.1d; 
+                        dTestx = fPlayerX + fEyeX * fDistanceToWall;
+                        testX = Convert.ToInt32(fPlayerX + fEyeX * fDistanceToWall);
+                        testY = Convert.ToInt32(fPlayerY + fEyeY * fDistanceToWall);
                         if (testX < 0 || testX >= nMapWidth || testY < 0 || testY >= nMapHeight)
                         {
                             bHitWall = true;
@@ -312,6 +313,19 @@
                         {
                             bHitWall = true;
                             //
+                            bBoundary = true;       // Set when ray hits boundary between two wall blocks
+
+
+
+
+                            if (lastX != testX || lastY != testY)
+                            {
+                                bBoundary2 = true;
+                            }
+                            lastX = testX;
+                            lastY = testY;
+                            Debug.WriteLine($" x {x:0.000}, dTestx: {dTestx:0.000} testX {testX:0.000}, testY {testY:0.000}");
+
                         }
                     }
                     // has distance to wall in short part of FOV
@@ -320,15 +334,15 @@
                     int nFloor = nScreenHeight - nCeiling;
 
                     char nShade = Colors.Black;
-                    if (fDistanceToWall <= fDepth / 3d)
+                    if (fDistanceToWall <= fDepth / 4d)
                     {
                         nShade = Colors.White;
                     }
-                    else if (fDistanceToWall < fDepth / 2d)
+                    else if (fDistanceToWall < fDepth / 3d)
                     {
                         nShade = Colors.Light;
                     }
-                    else if (fDistanceToWall < fDepth / 1.5d)
+                    else if (fDistanceToWall < fDepth / 2d)
                     {
                         nShade = Colors.Gray;
                     }
@@ -341,6 +355,25 @@
                         nShade = Colors.Black;
                     }
 
+                    if (bBoundary) 
+                    {
+                        //if (testX == 3 && testY == 6)
+                        //{
+                        //    nShade = '@'; // Black it out
+                        //}
+                        //var round = Math.Truncate(dTestx*10)/10;
+                        //if (round % 1 == 0)
+                        if (bBoundary2)
+                        {
+                            //Debug.WriteLine($" Bound dTestx {dTestx:0.000}");
+                            //nShade = '|'; // Black it out
+                            //lastX = -1;
+                            //lastY = -1;
+                        }
+                        bBoundary2 = false;
+                    }
+                    lastX = testX;
+                    lastY = testY;
                     for (int y = 0; y < nScreenHeight; y++)
                     {
                         if (y <= nCeiling)
