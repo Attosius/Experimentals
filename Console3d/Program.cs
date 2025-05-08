@@ -209,13 +209,13 @@
             map += "#..............#";// 3
             map += "#..............#";// 4
             map += "#..............#";// 5
-            map += "#..............#";// 6
-            map += "#..#...........#";// 7
+            map += "#...#..........#";// 6
+            map += "#..##..........#";// 7
             map += "#..............#";
-            map += "#..............#";
-            map += "#..............#";
-            map += "#..............#";
-            map += "#..............#";
+            map += "#............#.#";
+            map += "#............#.#";
+            map += "#............#.#";
+            map += "#............#.#";
             map += "#..............#";
             map += "#..............#";
             map += "#..............#";
@@ -283,9 +283,10 @@
 
                 int lastX = -1;
                 int lastY = -1;
+                var hs = new HashSet<(int x, int y)>();
                 for (int x = 0; x < nScreenWidth; x++)  // Проходим по всем X в зоне видимости
                 {
-                    double fRayAngle = (fPlayerA - fFOV / 2.0d) + (fFOV / nScreenWidth) * x; // short part of FOV angle //((double)x / nScreenWidth) * fFOV;
+                    double fRayAngle = (fPlayerA - fFOV / 2.0d) + ((double)x / (double)nScreenWidth) * fFOV; // short part of FOV angle //((double)x / nScreenWidth) * fFOV;
                     //Debug.WriteLine($" fRayAngle {fRayAngle:0.000}, fPlayerA: {fPlayerA:0.000}");
 
                     double fDistanceToWall = 0.0d; // Расстояние до препятствия в направлении fRayAngle
@@ -313,18 +314,63 @@
                         {
                             bHitWall = true;
                             //
-                            bBoundary = true;       // Set when ray hits boundary between two wall blocks
-
-
-
-
-                            if (lastX != testX || lastY != testY)
+                            if (testX == 3 && testY == 6)
                             {
-                                bBoundary2 = true;
+
                             }
-                            lastX = testX;
-                            lastY = testY;
-                            Debug.WriteLine($" x {x:0.000}, dTestx: {dTestx:0.000} testX {testX:0.000}, testY {testY:0.000}");
+                            //bBoundary = true;       // Set when ray hits boundary between two wall blocks
+                            var list = new List<(double magn, double dot, double acos)>();
+                            for (int i = 0; i < 2; i++)
+                            {
+                                for (int j = 0; j < 2; j++)
+                                {
+                                    double edgeX = (double)testX + (double)i - fPlayerX;
+                                    double edgeY = (double)testY + (double)j - fPlayerY;
+                                    var magnitude = Math.Sqrt((edgeX* edgeX) + (edgeY * edgeY));
+                                    var mEdgeX = edgeX / magnitude;
+                                    var mEdgeY = edgeY / magnitude;
+                                    var dotProd = fEyeX* mEdgeX + fEyeY* mEdgeY;
+                                    list.Add((magnitude, dotProd, Math.Acos(dotProd)));
+                                }
+                            }
+                            list = [.. list.OrderBy(x => x.magn)];
+                            if (x == 38)
+                            {
+                                //bBoundary = true;
+                            }
+                            double dBoundary = 0.005d;
+                            if (list[0].acos < dBoundary)
+                            {
+                                bBoundary = true;
+                            }
+                            if (list[1].acos < dBoundary)
+                            {
+                                bBoundary = true;
+                            }
+                            //if (list[2].dot < dBoundary)
+                            //{
+                            //    bBoundary = true;
+                            //}
+                            //if (list[3].dot < dBoundary)
+                            //{
+                            //    bBoundary = true;
+                            //}
+
+                            //if (lastX != testX || lastY != testY)
+                            //{
+                            //    bBoundary2 = true;
+                            //}
+                            //lastX = testX;
+                            //lastY = testY;
+                            if (testX == 3 && testY == 6)
+                            {
+                                //Debug.WriteLine($" x {x:0.000}, dTestx: {dTestx:0.000} testX {testX:0.000}, testY {testY:0.000}");
+
+                               // Debug.WriteLine($" magn {list[0].magn:0.00}, dot {list[0].dot:0.000},____________ bBoundary: {bBoundary}");
+                               // Debug.WriteLine($" magn {list[1].magn:0.00}, dot {list[1].dot:0.000},____________ bBoundary: {bBoundary}");
+                               // Debug.WriteLine($" magn {list[2].magn:0.00}, dot {list[2].dot:0.000},____________ bBoundary: {bBoundary}");
+                               // Debug.WriteLine($" magn {list[3].magn:0.00}, dot {list[3].dot:0.000},____________ bBoundary: {bBoundary}");
+                            }
 
                         }
                     }
@@ -355,22 +401,9 @@
                         nShade = Colors.Black;
                     }
 
-                    if (bBoundary) 
+                    if (bBoundary)
                     {
-                        //if (testX == 3 && testY == 6)
-                        //{
-                        //    nShade = '@'; // Black it out
-                        //}
-                        //var round = Math.Truncate(dTestx*10)/10;
-                        //if (round % 1 == 0)
-                        if (bBoundary2)
-                        {
-                            //Debug.WriteLine($" Bound dTestx {dTestx:0.000}");
-                            //nShade = '|'; // Black it out
-                            //lastX = -1;
-                            //lastY = -1;
-                        }
-                        bBoundary2 = false;
+                        nShade = '|'; // Black it out
                     }
                     lastX = testX;
                     lastY = testY;
