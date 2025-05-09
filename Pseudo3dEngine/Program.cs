@@ -1,4 +1,5 @@
-﻿using SFML.Graphics;
+﻿using System.Diagnostics;
+using SFML.Graphics;
 using SFML.System;
 using SFML.Window;
 
@@ -19,7 +20,7 @@ namespace Pseudo3dEngine
                 Sprite sprite = new Sprite(texture);
 
                 var font = new Font("d:\\Projects\\Experimentals\\Pseudo3dEngine\\cour.ttf");
-                var text = new Text("Hello SFML", font, 50);
+
                 var circleShape = new CircleShape(50);
                 circleShape.FillColor = Color.Green;
 
@@ -47,40 +48,43 @@ namespace Pseudo3dEngine
                 var person = new Person();
 
                 var cam = new CameraMan();
-                
+                var sw = new Stopwatch();
                 // Start the game loop
                 while (window.IsOpen)
                 {
-                    // Process events
+                    var elapsed = sw.ElapsedMilliseconds / (double)1000; ;
+                    sw.Restart();
+                    Thread.Sleep(10);
+
                     window.DispatchEvents();
-                    window.Closed += (object? sender, EventArgs e) => ((RenderWindow)sender!).Close();
+                    window.Closed += (sender, _) => ((RenderWindow)sender!).Close();
 
 
                     if (Keyboard.IsKeyPressed(Keyboard.Key.W) )
                     {
                         var personPosition = person.Position;
-                        personPosition.X += (float)Math.Sin(person.Direction) * 0.01f;
-                        personPosition.Y += (float)Math.Cos(person.Direction) * 0.01f;
+                        personPosition.X += (float)Math.Sin(person.Direction) * person.Speed;
+                        personPosition.Y += (float)Math.Cos(person.Direction) * person.Speed;
                         person.Position = personPosition;
                     }
                     if (Keyboard.IsKeyPressed(Keyboard.Key.S))
                     {
                         var personPosition = person.Position;
-                        personPosition.X -= (float)Math.Sin(person.Direction) * 0.01f;
-                        personPosition.Y -= (float)Math.Cos(person.Direction) * 0.01f;
+                        personPosition.X -= (float)Math.Sin(person.Direction) * person.Speed;
+                        personPosition.Y -= (float)Math.Cos(person.Direction) * person.Speed;
                         person.Position = personPosition;
                     }
 
                     if ( Keyboard.IsKeyPressed(Keyboard.Key.Up))
                     {
                         var personPosition = person.Position;
-                        personPosition.Y -= 0.1f;
+                        personPosition.Y -= person.SpeedStrafe;
                         person.Position = personPosition;
                     }
                     if (Keyboard.IsKeyPressed(Keyboard.Key.Down))
                     {
                         var personPosition = person.Position;
-                        personPosition.Y += 0.1f;
+                        personPosition.Y += person.SpeedStrafe;
                         person.Position = personPosition;
                     }
 
@@ -88,32 +92,31 @@ namespace Pseudo3dEngine
                     if (Keyboard.IsKeyPressed(Keyboard.Key.Left))
                     {
                         var personPosition = person.Position;
-                        personPosition.X -= 0.1f;
+                        personPosition.X -= person.SpeedStrafe;
                         person.Position = personPosition;
                     }
                     if (Keyboard.IsKeyPressed(Keyboard.Key.Right))
                     {
                         var personPosition = person.Position;
-                        personPosition.X += 0.1f;
+                        personPosition.X += person.SpeedStrafe;
                         person.Position = personPosition;
                     }
 
                     if (Keyboard.IsKeyPressed(Keyboard.Key.A))
                     {
-                        person.Direction += 0.001f;
+                        person.Direction += person.SpeedTurn;
                     }
                     if (Keyboard.IsKeyPressed(Keyboard.Key.D))
                     {
-                        person.Direction -= 0.001f;
+                        person.Direction -= person.SpeedTurn;
                     }
                     // Clear screen
                     window.Clear();
- 
+
                     // Draw the sprite
                     //window.Draw(sprite);
- 
+
                     // Draw the string
-                    //window.Draw(text);
                     window.Draw(circleShape);
                     window.Draw(rectangle);
                     window.Draw(person);
@@ -121,6 +124,15 @@ namespace Pseudo3dEngine
                     window.Draw(cam);
                     //window.Draw(lineArr, PrimitiveType.LineStrip);
                     // Update the window
+                    var fps = 1d / elapsed;
+                    //Console.WriteLine(fps);
+                    var text = new Text($"Position: X ({person.Position.X:000.00}) Y ({person.Position.Y:000.00})," +
+                                        $" angle: {person.DirectionDegree:000.00}, FPS: {fps:00.00}", font, 12);
+                    text.Position = new Vector2f(0, 0);
+                    text.FillColor = Color.White;
+                    //text.OutlineThickness = 0.1f;
+                    window.Draw(text);
+
                     window.Display();
                 }
                 Console.ReadLine();
@@ -137,6 +149,10 @@ namespace Pseudo3dEngine
         public Vector2f Position { get; set; }
         public double Fov { get; set; } = 3.14 / 3;
         public float Direction { get; set; } = 0;
+        public float Speed = 6f;
+        public float SpeedTurn = 0.1f;
+
+        public float SpeedStrafe = 5f;
 
         public float DirectionDegree => Direction * 180 / (float)Math.PI;
 
@@ -147,15 +163,15 @@ namespace Pseudo3dEngine
             person.FillColor = Color.Red;
             person.Position = Position;
             target.Draw(person);
-            //Console.WriteLine($"Position: {person.Position}, angle: {DirectionDegree}");
+
             var center = new Vector2f(Position.X + radius, Position.Y + radius);
-            //Console.WriteLine(Position);
+
             var xDir = center.X + (float)Math.Sin(Direction) * 50f;
             var yDir = center.Y + (float)Math.Cos(Direction) * 50f;
             var lineArr = new Vertex[]
             {
-                new Vertex(center),
-                new Vertex(new Vector2f(xDir, yDir)),
+                new(center),
+                new(new Vector2f(xDir, yDir)),
             };
             target.Draw(lineArr, PrimitiveType.LineStrip, states);
         }
