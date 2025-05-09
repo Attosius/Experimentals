@@ -9,7 +9,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NetTests", "NetTests\NetTes
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProgrammsSwitcher", "ProgrammsSwitcher\ProgrammsSwitcher.csproj", "{F58AE19E-B46D-4BAA-92E8-BF3A73CC679F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Console3d", "Console3d\Console3d.csproj", "{15EA4751-2406-4ACC-BEEF-2564D407BC90}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Console3d", "Console3d\Console3d.csproj", "{15EA4751-2406-4ACC-BEEF-2564D407BC90}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pseudo3dEngine", "Pseudo3dEngine\Pseudo3dEngine.csproj", "{E14859E4-7442-4E19-8FEE-60BCBB45DDE1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,6 +35,10 @@ Global
 		{15EA4751-2406-4ACC-BEEF-2564D407BC90}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{15EA4751-2406-4ACC-BEEF-2564D407BC90}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{15EA4751-2406-4ACC-BEEF-2564D407BC90}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E14859E4-7442-4E19-8FEE-60BCBB45DDE1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E14859E4-7442-4E19-8FEE-60BCBB45DDE1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E14859E4-7442-4E19-8FEE-60BCBB45DDE1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E14859E4-7442-4E19-8FEE-60BCBB45DDE1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
