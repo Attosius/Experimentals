@@ -13,8 +13,8 @@ namespace Pseudo3dEngine
                 Console.WriteLine("Hello, World!");
                 var videoMode = new VideoMode(800, 600);
                 var window = new RenderWindow(videoMode, "Sfml window");
-                
                 window.Display();
+
                 Texture texture = new Texture("d:\\Projects\\Experimentals\\Pseudo3dEngine\\cold_heart.jpeg");
                 Sprite sprite = new Sprite(texture);
 
@@ -26,18 +26,14 @@ namespace Pseudo3dEngine
 
                 var rectangle = new RectangleShape(new Vector2f(120f, 50f));
                 rectangle.FillColor = new Color(255, 175, 174);
-                rectangle.Size = new Vector2f(200f, 500f);
-                rectangle.Position = new Vector2f(30, 60);
+                rectangle.Size = new Vector2f(10, 10);
+                rectangle.Position = new Vector2f(0, 0);
                 rectangle.OutlineThickness = 2;
                 rectangle.OutlineColor = new Color(255, 255, 255);
 
 
-                var person = new CircleShape(10);
-                person.FillColor = Color.Red;
-                var personPosition = new Vector2f(10, 10);
-                person.Position = personPosition;
 
-                var line = new RectangleShape (new Vector2f(150, 5));
+                var line = new RectangleShape (new Vector2f(10, 133));
                 line.Rotation = 45;
 
 
@@ -47,24 +43,43 @@ namespace Pseudo3dEngine
                     new Vertex(new Vector2f(150, 150)),
                     new Vertex(new Vector2f(50, 10))
                 };
+
+                var person = new Person();
+
+                var cam = new CameraMan();
                 
                 // Start the game loop
                 while (window.IsOpen)
                 {
                     // Process events
                     window.DispatchEvents();
-                    window.Closed += (object? sender, EventArgs e) => window.Close();
+                    window.Closed += (object? sender, EventArgs e) => ((RenderWindow)sender!).Close();
 
 
-                    if (Keyboard.IsKeyPressed(Keyboard.Key.W) || Keyboard.IsKeyPressed(Keyboard.Key.Up))
+                    if (Keyboard.IsKeyPressed(Keyboard.Key.W) )
                     {
-                        // left key is pressed: move our character
+                        var personPosition = person.Position;
+                        personPosition.X += (float)Math.Sin(person.Direction) * 0.01f;
+                        personPosition.Y += (float)Math.Cos(person.Direction) * 0.01f;
+                        person.Position = personPosition;
+                    }
+                    if (Keyboard.IsKeyPressed(Keyboard.Key.S))
+                    {
+                        var personPosition = person.Position;
+                        personPosition.X -= (float)Math.Sin(person.Direction) * 0.01f;
+                        personPosition.Y -= (float)Math.Cos(person.Direction) * 0.01f;
+                        person.Position = personPosition;
+                    }
+
+                    if ( Keyboard.IsKeyPressed(Keyboard.Key.Up))
+                    {
+                        var personPosition = person.Position;
                         personPosition.Y -= 0.1f;
                         person.Position = personPosition;
                     }
-                    if (Keyboard.IsKeyPressed(Keyboard.Key.S) || Keyboard.IsKeyPressed(Keyboard.Key.Down))
+                    if (Keyboard.IsKeyPressed(Keyboard.Key.Down))
                     {
-                        // left key is pressed: move our character
+                        var personPosition = person.Position;
                         personPosition.Y += 0.1f;
                         person.Position = personPosition;
                     }
@@ -72,17 +87,25 @@ namespace Pseudo3dEngine
 
                     if (Keyboard.IsKeyPressed(Keyboard.Key.Left))
                     {
-                        // left key is pressed: move our character
+                        var personPosition = person.Position;
                         personPosition.X -= 0.1f;
                         person.Position = personPosition;
                     }
                     if (Keyboard.IsKeyPressed(Keyboard.Key.Right))
                     {
-                        // left key is pressed: move our character
+                        var personPosition = person.Position;
                         personPosition.X += 0.1f;
                         person.Position = personPosition;
                     }
 
+                    if (Keyboard.IsKeyPressed(Keyboard.Key.A))
+                    {
+                        person.Direction += 0.001f;
+                    }
+                    if (Keyboard.IsKeyPressed(Keyboard.Key.D))
+                    {
+                        person.Direction -= 0.001f;
+                    }
                     // Clear screen
                     window.Clear();
  
@@ -90,12 +113,13 @@ namespace Pseudo3dEngine
                     //window.Draw(sprite);
  
                     // Draw the string
-                    window.Draw(text);
-                    //window.Draw(circleShape);
+                    //window.Draw(text);
+                    window.Draw(circleShape);
                     window.Draw(rectangle);
                     window.Draw(person);
                     //window.Draw(line);
-                    window.Draw(lineArr, PrimitiveType.LineStrip);
+                    window.Draw(cam);
+                    //window.Draw(lineArr, PrimitiveType.LineStrip);
                     // Update the window
                     window.Display();
                 }
@@ -107,5 +131,49 @@ namespace Pseudo3dEngine
             }
         }
         
+    }
+    public class Person : Drawable
+    {
+        public Vector2f Position { get; set; }
+        public double Fov { get; set; } = 3.14 / 3;
+        public float Direction { get; set; } = 0;
+
+        public float DirectionDegree => Direction * 180 / (float)Math.PI;
+
+        public void Draw(RenderTarget target, RenderStates states)
+        {
+            var radius = 10f;
+            var person = new CircleShape(radius);
+            person.FillColor = Color.Red;
+            person.Position = Position;
+            target.Draw(person);
+            //Console.WriteLine($"Position: {person.Position}, angle: {DirectionDegree}");
+            var center = new Vector2f(Position.X + radius, Position.Y + radius);
+            //Console.WriteLine(Position);
+            var xDir = center.X + (float)Math.Sin(Direction) * 50f;
+            var yDir = center.Y + (float)Math.Cos(Direction) * 50f;
+            var lineArr = new Vertex[]
+            {
+                new Vertex(center),
+                new Vertex(new Vector2f(xDir, yDir)),
+            };
+            target.Draw(lineArr, PrimitiveType.LineStrip, states);
+        }
+    }
+
+    public class CameraMan : Transformable, Drawable
+    {
+        public void Draw(RenderTarget target, RenderStates states)
+        {
+            var lineArr = new Vertex[]
+            {
+                new Vertex(new Vector2f(10, 50)),
+                new Vertex(new Vector2f(150, 150)),
+                //new Vertex(new Vector2f(50, 10)),
+                //new Vertex(new Vector2f(520, 130)),
+                //new Vertex(new Vector2f(530, 160))
+            };
+            target.Draw(lineArr, PrimitiveType.LineStrip, states);
+        }
     }
 }
