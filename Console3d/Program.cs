@@ -149,43 +149,12 @@
                 else if (map[testY * nMapWidth + testX] == '#')
                 {
                     bHitWall = true;
-
-                    // Set when ray hits boundary between two wall blocks
-                    var list = new List<(double magn, double dot, double acos)>();
-                    for (int i = 0; i < 2; i++)
-                    {
-                        for (int j = 0; j < 2; j++)
-                        {
-                            double edgeX = (double)testX + (double)i - dPlayerX;
-                            double edgeY = (double)testY + (double)j - dPlayerY;
-                            var magnitude = Math.Sqrt((edgeX * edgeX) + (edgeY * edgeY));
-                            var mEdgeX = edgeX / magnitude;
-                            var mEdgeY = edgeY / magnitude;
-                            var dotProd = fEyeX * mEdgeX + fEyeY * mEdgeY;
-                            list.Add((magnitude, dotProd, Math.Acos(dotProd)));
-                        }
-                    }
-                    list = list.OrderBy(x => x.magn).ToList();
-
-                    double dBoundary = 0.005d;
-                    if (list[0].acos < dBoundary)
-                    {
-                        bBoundary = true;
-                    }
-                    if (list[1].acos < dBoundary)
-                    {
-                        bBoundary = true;
-                    }
-                    //if (list[2].dot < dBoundary)
-                    //{
-                    //    bBoundary = true;
-                    //}
-
+                    bBoundary = CheckEdge(testX, testY, fEyeX, fEyeY);
                 }
             }
             // has distance to wall in short part of FOV
             // coord sky and floor
-            int nCeiling = Convert.ToInt32((nScreenHeight / 2) - (nScreenHeight / dDistanceToWall));
+            int nCeiling = Convert.ToInt32((nScreenHeight / 2) - (nScreenHeight / (1 *dDistanceToWall)));
             int nFloor = nScreenHeight - nCeiling;
 
             char nShade = Colors.Black;
@@ -253,6 +222,45 @@
                     screen[y * nScreenWidth + x] = nShade;
                 }
             }
+        }
+
+        private static bool CheckEdge(int testX, int testY, double fEyeX, double fEyeY)
+        {
+            // Set when ray hits boundary between two wall blocks
+            var list = new List<(double magn, double dot, double acos)>();
+            for (int i = 0; i < 2; i++)
+            {
+                for (int j = 0; j < 2; j++)
+                {
+                    double edgeX = (double)testX + (double)i - dPlayerX;
+                    double edgeY = (double)testY + (double)j - dPlayerY;
+                    var magnitude = Math.Sqrt((edgeX * edgeX) + (edgeY * edgeY));
+                    var mEdgeX = edgeX / magnitude;
+                    var mEdgeY = edgeY / magnitude;
+                    var dotProd = fEyeX * mEdgeX + fEyeY * mEdgeY;
+                    list.Add((magnitude, dotProd, Math.Acos(dotProd)));
+                }
+            }
+
+            list = list.OrderBy(x => x.magn).ToList();
+
+            double dBoundary = 0.005d;
+            var bBoundary = false;
+
+            if (list[0].acos < dBoundary)
+            {
+                bBoundary = true;
+            }
+
+            if (list[1].acos < dBoundary)
+            {
+                bBoundary = true;
+            }
+            //if (list[2].dot < dBoundary)
+            //{
+            //    bBoundary = true;
+            //}
+            return bBoundary;
         }
 
         private static void CreateConsole(out nint hConsole)
