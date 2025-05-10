@@ -6,6 +6,8 @@ namespace Pseudo3dEngine;
 public class Object2d : Drawable
 {
     public List<Vector2f> Points = new ();
+    public Color FillColor = new Color(255, 175, 174);
+    public Color OutlineColor = new Color(255, 255, 255);
 
     public void Draw(RenderTarget target, RenderStates states)
     {
@@ -16,9 +18,9 @@ public class Object2d : Drawable
             var vector2F = Points[i];
             convexShape.SetPoint((uint)i, vector2F);
         }
-        convexShape.FillColor = new Color(255, 175, 174);
+        convexShape.FillColor = FillColor;
         convexShape.OutlineThickness = 2;
-        convexShape.OutlineColor = new Color(255, 255, 255);
+        convexShape.OutlineColor = OutlineColor;
         target.Draw(convexShape);
     }
 }

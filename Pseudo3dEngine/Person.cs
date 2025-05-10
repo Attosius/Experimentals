@@ -22,35 +22,28 @@ public class Person : Drawable
 
         var center = new Vector2f(Position.X + radius, Position.Y + radius);
 
-        DrawDirection(target, states, center);
+        var viewSector = new Object2d();
+        viewSector.Points.Add(center);
 
         var leftViewAngle = Direction - Fov / 2;
         var leftPoint = GetPointAtAngleAndDistance(center, leftViewAngle, DistanceView);
-        var leftLineView = new Vertex[]
-        {
-            new(center),
-            new(leftPoint),
-        };
-        target.Draw(leftLineView, PrimitiveType.LineStrip, states);
-        var rightViewAngle = Direction + Fov / 2;
-        var rightPoint = GetPointAtAngleAndDistance(center, rightViewAngle, DistanceView);
-        var rightLineView = new Vertex[]
-        {
-            new(center),
-            new(rightPoint),
-        };
-        target.Draw(rightLineView, PrimitiveType.LineStrip, states);
+        viewSector.Points.Add(leftPoint);
 
-        var delta = Fov / 9;
+        var delta = Fov / 10;
         var currentAngle = leftViewAngle;
-        var circleRadius = new Vertex[10];
         for (int i = 0; i < 10; i++)
         {
             var point = GetPointAtAngleAndDistance(center, currentAngle, DistanceView);
-            circleRadius[i] = new Vertex(point);
             currentAngle += delta;
+            viewSector.Points.Add(point);
         }
-        target.Draw(circleRadius, PrimitiveType.LineStrip, states);
+
+        var rightViewAngle = Direction + Fov / 2;
+        var rightPoint = GetPointAtAngleAndDistance(center, rightViewAngle, DistanceView);
+        viewSector.Points.Add(rightPoint);
+        target.Draw(viewSector);
+
+        DrawDirection(target, states, center);
     }
 
     private static Vector2f GetPointAtAngleAndDistance(Vector2f center, double angle, float distance)
@@ -62,8 +55,8 @@ public class Person : Drawable
 
     private void DrawDirection(RenderTarget target, RenderStates states, Vector2f center)
     {
-        var xDir = center.X + (float)Math.Sin(Direction) * 50f;
-        var yDir = center.Y + (float)Math.Cos(Direction) * 50f;
+        var xDir = center.X + (float)Math.Sin(Direction) * 150f;
+        var yDir = center.Y + (float)Math.Cos(Direction) * 150f;
         var lineArr = new Vertex[]
         {
             new(center),
