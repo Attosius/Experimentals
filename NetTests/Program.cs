@@ -34,6 +34,9 @@
     {
         static void Main(string[] args)
         {
+            var readAllLines = File.ReadAllLines("d:\\Projects\\Experimentals\\NetTests\\bin\\Debug\\obs.txt");
+            readAllLines = readAllLines.Reverse().ToArray();
+            var text = string.Join("\n", readAllLines);
             var b = new B();
             b.F();
             A a = b;
