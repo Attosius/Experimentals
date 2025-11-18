@@ -5,6 +5,9 @@ using System.Text.RegularExpressions;
 
 namespace MostUsedWords
 {
+    // есть папка с несколькими большими файлами (нельзя загружать полностью в память)
+    // нужно прочитать все файлы, и выписать топ 10 самых часто встречающихся слов
+    // слова выбирать с минимальным  размером minLength, заданным в конфиге
 
     class Program
     {
@@ -45,7 +48,6 @@ namespace MostUsedWords
 
                         dictionary[kv.Key] = kv.Value;
                     }
-
                 }
             }
 

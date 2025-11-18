@@ -15,4 +15,10 @@
     <None Include="2_6_Конвертер_валют.cs" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="map.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

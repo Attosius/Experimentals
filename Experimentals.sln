@@ -13,12 +13,14 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Console3d", "Console3d\Cons
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Pseudo3dEngine", "Pseudo3dEngine\Pseudo3dEngine.csproj", "{E14859E4-7442-4E19-8FEE-60BCBB45DDE1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IJuniorTasks", "IJuniorTasks\IJuniorTasks.csproj", "{277557A4-EF73-4363-AD69-CED1A1CA276E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IJuniorTasks", "IJuniorTasks\IJuniorTasks.csproj", "{277557A4-EF73-4363-AD69-CED1A1CA276E}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{51029273-27B8-4C1E-A91B-7534215F75EA}"
 	ProjectSection(SolutionItems) = preProject
 		.editorconfig = .editorconfig
 	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ButtonsMonitor", "ButtonsMonitor\ButtonsMonitor.csproj", "{A73861CB-E501-4B05-8B7C-BB68C27B2EB7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -50,6 +52,10 @@ Global
 		{277557A4-EF73-4363-AD69-CED1A1CA276E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{277557A4-EF73-4363-AD69-CED1A1CA276E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{277557A4-EF73-4363-AD69-CED1A1CA276E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A73861CB-E501-4B05-8B7C-BB68C27B2EB7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A73861CB-E501-4B05-8B7C-BB68C27B2EB7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A73861CB-E501-4B05-8B7C-BB68C27B2EB7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A73861CB-E501-4B05-8B7C-BB68C27B2EB7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
