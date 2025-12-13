@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace IJuniorTasks
 {
@@ -7,34 +8,25 @@ namespace IJuniorTasks
     {
         static void Main(string[] args)
         {
-            const string CommandAddRecord = "1";
-            const string CommandShowAllRecords = "2";
-            const string CommandRemoveRecord = "3";
-            const string CommandFindRecords = "4";
-            const string CommandExit = "5";
+            var administrator = new Administrator();
+            administrator.Run();
+        }
+    }
 
+    public class Administrator
+    {
+        private const string CommandGetCards = "1";
+        private const string CommandExit = "2";
+
+        public void Run()
+        {
             bool isWork = true;
-            var usersPositions = new Dictionary<string, List<string>>();
-
-            usersPositions["Прогер"] = new List<string>()
-            {
-                "Петров Антон Игоревич",
-                "Смирнов Павел Андреевич",
-                "Копылов"
-            };
-            usersPositions["Юзер"] = new List<string>()
-            {
-                "Папин Игорь Игоревич",
-                "Дарья Андреевич"
-            };
+            
 
             while (isWork)
             {
                 Console.WriteLine($"\n\nВведите команду:");
-                Console.WriteLine($"{CommandAddRecord}. Добавить досье");
-                Console.WriteLine($"{CommandShowAllRecords}. Показать все досье");
-                Console.WriteLine($"{CommandRemoveRecord}. Удалить досье");
-                Console.WriteLine($"{CommandFindRecords}. Найти досье");
+                Console.WriteLine($"{CommandGetCards}. Раздать карты");
                 Console.WriteLine($"{CommandExit}. Выход");
                 Console.WriteLine();
 
@@ -42,20 +34,8 @@ namespace IJuniorTasks
 
                 switch (command)
                 {
-                    case CommandAddRecord:
-                        AddRecord(usersPositions);
-                        break;
-
-                    case CommandShowAllRecords:
-                        ShowRecords(usersPositions);
-                        break;
-
-                    case CommandRemoveRecord:
-                        RemoveRecord(usersPositions);
-                        break;
-
-                    case CommandFindRecords:
-                        FindRecordsBySurname(usersPositions);
+                    case CommandGetCards:
+                        //database.AddPlayer();
                         break;
 
                     case CommandExit:
@@ -68,114 +48,110 @@ namespace IJuniorTasks
                 }
             }
         }
+    }
 
-        private static void AddRecord(Dictionary<string, List<string>> usersPositions)
+    public class Croupier
+    {
+
+    }
+
+    public class Deck
+    {
+        private List<Card> Cards { get; set; }
+
+        public Deck()
         {
-            Console.WriteLine($"\n\nВведите Фамилию Имя и Отчество:");
-            var userFullName = Console.ReadLine();
-
-            Console.WriteLine($"Введите должность:");
-            var userPosition = Console.ReadLine();
-
-            if (!usersPositions.ContainsKey(userPosition))
-            {
-                usersPositions[userPosition] = new List<string>();
-            }
-
-            usersPositions[userPosition].Add(userFullName);
-            Console.WriteLine($"Досье с ФИО {userFullName} и должностью {userPosition} успешно добавлено");
+            CreateFullDeck();
         }
 
-        private static void ShowRecords(Dictionary<string, List<string>> usersPositions)
+        public void Shuffle()
         {
-            int positionIndex = 0;
-            int userIndex = 0;
-
-            foreach (var usersPositionsKey in usersPositions.Keys)
+            var random = new Random();
+            for (int i = 0; i < Cards.Count; i++)
             {
-                positionIndex++;
-                Console.WriteLine($"{positionIndex}. Должность {usersPositionsKey}.");
-                
-                foreach (var user in usersPositions[usersPositionsKey])
-                {
-                    userIndex++;
-                    Console.WriteLine($"\t{userIndex}. {user}.");
-                }
+                var indexToChange = random.Next(Cards.Count);
+                var temp = Cards[i];
+                Cards[i] = Cards[indexToChange];
+                Cards[indexToChange] = temp;
             }
         }
 
-        private static void RemoveRecord(Dictionary<string, List<string>> usersPositions)
+        public bool TryGetCards(int count, out List<Card> list)
         {
-            ShowRecords(usersPositions);
+            list = new List<Card>();
 
-            Console.WriteLine($"Введите индекс сотрудника для удаления:");
-            var indexToRemoveString = Console.ReadLine();
-
-            if (int.TryParse(indexToRemoveString, out var indexToRemove) == false)
+            if (count > Cards.Count)
             {
-                Console.WriteLine($"Некорректный индекс для удаления!");
-                return;
+                Console.WriteLine($"Недостаточно карт для раздачи {count} > {Cards.Count}");
+                return false;
             }
 
-            int userIndex = 0;
-            string userPosition = string.Empty;
-            string userNameToRemove = string.Empty;
-
-            foreach (var usersPositionsKey in usersPositions.Keys)
+            for (int i = 0; i < count; i++)
             {
-                foreach (var user in usersPositions[usersPositionsKey])
+                var card = Cards[i];
+                list.Add(card);
+                Cards.RemoveAt(i);
+            }
+
+            return true;
+        }
+
+        private void CreateFullDeck()
+        {
+            Cards = new List<Card>();
+            foreach (var rank in Enum.GetValues<Ranks>())
+            {
+                foreach (var suit in Enum.GetValues<Suits>())
                 {
-                    userIndex++;
-
-                    if (userIndex == indexToRemove)
-                    {
-                        userNameToRemove = user;
-                        userPosition = usersPositionsKey;
-                    }
+                    var card = new Card(rank, suit);
+                    Cards.Add(card);
                 }
-            }
-
-            if (!string.IsNullOrWhiteSpace(userNameToRemove))
-            {
-                usersPositions[userPosition].Remove(userNameToRemove);
-                Console.WriteLine($"Досье с ФИО {userNameToRemove} успешно удалено");
-
-                if (usersPositions[userPosition].Count == 0)
-                {
-                    usersPositions.Remove(userPosition);
-                }
-            }
-            else
-            {
-                Console.WriteLine($"Досье с индексом {indexToRemove} не найдено");
             }
         }
-        
-        private static void FindRecordsBySurname(Dictionary<string, List<string>> usersPositions)
+    }
+
+    public class Card
+    {
+        public Card(Ranks rank, Suits suit)
         {
-            Console.WriteLine($"Введите фамилию для поиска:");
-            var surnameToFind = Console.ReadLine();
-            bool isFind = false;
-            var userIndex = 0;
-
-            foreach (var usersPositionsKey in usersPositions.Keys)
-            {
-                foreach (var user in usersPositions[usersPositionsKey])
-                {
-                    var surname = user.Split(' ')[0];
-
-                    if (surname.Contains(surnameToFind, StringComparison.OrdinalIgnoreCase))
-                    {
-                        Console.WriteLine($"{++userIndex}. ФИО: {user}. Должность: {usersPositionsKey}");
-                        isFind = true;
-                    }
-                }
-            }
-
-            if (isFind == false)
-            {
-                Console.WriteLine($"Досье с фамилией {surnameToFind} не найдено");
-            }
+            Rank = rank;
+            Suit = suit;
         }
+
+        public Ranks Rank { get; }
+
+        public Suits Suit { get; }
+    }
+
+    public enum Suits
+    {
+        // Пики 
+        Spades = 1,
+
+        // Червы  
+        Hearts = 2,
+
+        // Бубны  
+        Diamonds = 3,
+
+        // Трефы  
+        Clubs = 4,
+    }
+
+    public enum Ranks
+    {
+        Ace = 1,
+        Two = 2,
+        Three = 3,
+        Four = 4,
+        Five = 5,
+        Six = 6,
+        Seven = 7,
+        Eight = 8,
+        Nine = 9,
+        Ten = 10,
+        Jack = 11,
+        Queen = 12,
+        King = 13
     }
 }
