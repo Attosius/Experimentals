@@ -93,7 +93,7 @@ namespace IJuniorTasks62
 
         public void RemovePlayer()
         {
-            if (!TryGetPlayerById(out var player))
+            if (TryGetPlayerById(out var player) == false)
             {
                 return;
             }
@@ -104,7 +104,7 @@ namespace IJuniorTasks62
 
         public void BanPlayer()
         {
-            if (!TryGetPlayerById(out var player))
+            if (TryGetPlayerById(out var player) == false)
             {
                 return;
             }
@@ -115,7 +115,7 @@ namespace IJuniorTasks62
 
         public void UnbanPlayer()
         {
-            if (!TryGetPlayerById(out var player))
+            if (TryGetPlayerById(out var player) == false)
             {
                 return;
             }
@@ -146,7 +146,7 @@ namespace IJuniorTasks62
             Console.WriteLine("Введите id игрока:");
             var idString = Console.ReadLine();
 
-            if (!int.TryParse(idString, out var id))
+            if (int.TryParse(idString, out var id) == false)
             {
                 Console.WriteLine($"Некорректный Id: {id}");
                 return false;

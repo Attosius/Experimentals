@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace IJuniorTasks62
+namespace IJuniorTasks61
 {
     internal class Program62
     {
