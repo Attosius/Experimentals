@@ -15,25 +15,23 @@ namespace IJuniorTasks
 
     public class Administrator
     {
-        private const string CommandAddBook = "1";
-        private const string CommandRemoveBook = "2";
-        private const string CommandShow = "3";
-        private const string CommandFind = "4";
-        private const string CommandExit = "5";
+        private const string CommandShowGoods = "1";
+        private const string CommandBuy = "2";
+        private const string CommandShowPurchases = "3";
+        private const string CommandExit = "4";
 
         public void Run()
         {
             bool isWork = true;
 
-            var database = new DatabaseBooks();
+            var store = new Store();
 
             while (isWork)
             {
                 Console.WriteLine($"\n\nВведите команду:");
-                Console.WriteLine($"{CommandAddBook}. Добавить книгу");
-                Console.WriteLine($"{CommandRemoveBook}. Удалить книгу");
-                Console.WriteLine($"{CommandShow}. Показать книги");
-                Console.WriteLine($"{CommandFind}. Найти книги");
+                Console.WriteLine($"{CommandShowGoods}. Показать товары");
+                Console.WriteLine($"{CommandBuy}. Купить товары");
+                Console.WriteLine($"{CommandShowPurchases}. Показать купленные товары");
                 Console.WriteLine($"{CommandExit}. Выход");
                 Console.WriteLine();
 
@@ -41,22 +39,18 @@ namespace IJuniorTasks
 
                 switch (command)
                 {
-                    case CommandAddBook:
-                        database.AddBook();
+                    case CommandShowGoods:
+                        store.ShowSellersItems();
                         break;
 
-                    case CommandRemoveBook:
-                        database.RemoveBook();
+                    case CommandBuy:
+                        store.BuyItem();
                         break;
 
-                    case CommandShow:
-                        database.ShowAllBooks();
+                    case CommandShowPurchases:
+                        store.ShowBuyerInfo();
                         break;
-
-                    case CommandFind:
-                        database.FindBook();
-                        break;
-
+                        
                     case CommandExit:
                         isWork = false;
                         break;
@@ -69,191 +63,161 @@ namespace IJuniorTasks
         }
     }
 
-    public class DatabaseBooks
+    public class Store
     {
-        private const string CommandFindByName = "1";
-        private const string CommandFindByAuthor = "2";
-        private const string CommandFindByYear = "3";
+        private readonly Seller _seller;
+        private readonly Buyer _buyer;
 
-        private readonly List<Book> _booksList = new();
-        private int _booksCount = 0;
-
-        public void AddBook()
+        public Store()
         {
-            Console.WriteLine($"Введите название книги:");
-            var name = Console.ReadLine();
-
-            Console.WriteLine($"Введите автора книги:");
-            var author = Console.ReadLine();
-
-            Console.WriteLine($"Введите год выпуска книги:");
-            var yearString = Console.ReadLine();
-
-            if (int.TryParse(yearString, out var year) == false || year < 0 || year > DateTime.Today.Year)
-            {
-                Console.WriteLine($"Некорректный год.");
-                return;
-            }
-
-            var id = GetNewId();
-
-            var book = new Book(id, name, author, year);
-            _booksList.Add(book);
-            Console.WriteLine($"Книга {name} успешно добавлена. Id: {id}");
+            _seller = new Seller();
+            _buyer = new Buyer(Buyer.DefaultMoney);
         }
 
-        public void RemoveBook()
+        public void ShowSellersItems()
         {
-            if (TryGetBookById(out var book) == false)
-            {
-                return;
-            }
-
-            _booksList.Remove(book);
-            Console.WriteLine($"Книга c Id {book.Id} успешно удалена");
-        }
-        
-        public void FindBook()
-        {
-            Console.WriteLine($"Выберите критерий для поиска:");
-            Console.WriteLine($"{CommandFindByName}. По названию");
-            Console.WriteLine($"{CommandFindByAuthor}. По автору");
-            Console.WriteLine($"{CommandFindByYear}. По году выпуска");
-
-            var criteriaString = Console.ReadLine();
-            var books = new List<Book>();
-
-            switch (criteriaString)
-            {
-                case CommandFindByName:
-                    books = FindBooksByName();
-                    break;
-
-                case CommandFindByAuthor:
-                    books = FindBooksByAuthor();
-                    break;
-
-                case CommandFindByYear:
-                    books = FindBooksByYear();
-                    break;
-
-                default:
-                    Console.WriteLine($"Некорректная команда!");
-                    return;
-            }
-
-            if (books.Count == 0)
-            {
-                Console.WriteLine("Книги по заданному критерию не найдены");
-                return;
-            }
-
-            ShowBooks(books);
+            Console.WriteLine($"Товары продавца");
+            _seller.ShowItems();
         }
 
-        public void ShowAllBooks()
+        public void BuyItem()
         {
-            ShowBooks(_booksList);
-        }
-
-        private void ShowBooks(List<Book> books)
-        {
-            var index = 0;
-
-            foreach (var player in books)
-            {
-                index++;
-                Console.WriteLine($"{index}. {player}");
-            }
-        }
-
-        private int GetNewId()
-        {
-            return ++_booksCount;
-        }
-
-        private bool TryGetBookById(out Book book)
-        {
-            book = default;
-            Console.WriteLine("Введите id книги:");
+            ShowSellersItems();
+            Console.WriteLine($"Введите Id товара для покупки:");
             var idString = Console.ReadLine();
 
             if (int.TryParse(idString, out var id) == false)
             {
-                Console.WriteLine($"Некорректный Id: {id}");
-                return false;
+                Console.WriteLine("Некорректный Id");
+                return;
             }
 
-            book = _booksList.FirstOrDefault(book => book.Id == id);
-
-            if (book == null)
+            if (_seller.TryGetItemById(id, out var item) == false)
             {
-                Console.WriteLine($"Книга c Id {id} не найден");
-                return false;
+                Console.WriteLine("Не удалось найти товар");
+                return;
             }
 
-            return true;
-        }
-
-        private List<Book> FindBooksByName()
-        {
-            Console.WriteLine($"Введите название книги для поиска:");
-            var name = Console.ReadLine();
-            var books = _booksList
-                .Where(book => book.Name.Contains(name))
-                .ToList();
-
-            return books;
-        }
-
-        private List<Book> FindBooksByAuthor()
-        {
-            Console.WriteLine($"Введите автора книги для поиска:");
-            var author = Console.ReadLine();
-            var books = _booksList
-                .Where(book => book.Author.Contains(author))
-                .ToList();
-
-            return books;
-        }
-
-        private List<Book> FindBooksByYear()
-        {
-            Console.WriteLine($"Введите год выпуска книги для поиска:");
-            var yearString = Console.ReadLine();
-
-            if (int.TryParse(yearString, out var year) == false)
+            if (_buyer.TryBuyItem(item) == false)
             {
-                Console.WriteLine($"Некорректный год.");
-                return new List<Book>();
+                Console.WriteLine("Неудалось совершить покупку");
+                return;
             }
 
-            var books = _booksList
-                .Where(book => book.Year == year)
-                .ToList();
+            _seller.SellItem(item);
+            Console.WriteLine($"Покупка успешно совершена: {item}");
+        }
 
-            return books;
+        public void ShowBuyerInfo()
+        {
+            _buyer.ShowMoney();
+            Console.WriteLine($"Товары у покупателя");
+            _buyer.ShowItems();
         }
     }
 
-    public class Book
+    public class Seller : Person
     {
-        public Book(int id, string name, string author, int year)
+        private int _maxItemId = 0;
+
+        public Seller()
+        {
+            Fill();
+        }
+
+        public void Fill()
+        {
+            Items.Add(new Item(++_maxItemId, "Ржавый меч", 5));
+            Items.Add(new Item(++_maxItemId, "Меч", 10));
+            Items.Add(new Item(++_maxItemId, "Длинный меч", 20));
+            Items.Add(new Item(++_maxItemId, "Зелье здоровья", 10));
+            Items.Add(new Item(++_maxItemId, "Зелье маны", 10));
+        }
+
+        public bool TryGetItemById(int id, out Item item)
+        {
+            item = Items.FirstOrDefault(item => item.Id == id);
+            return item != null;
+        }
+
+        public void SellItem(Item item)
+        {
+            Items.Remove(item);
+            Money += item.Cost;
+        }
+    }
+
+    public class Buyer : Person
+    {
+        public static decimal DefaultMoney = 20;
+
+        public Buyer(decimal initialMoney)
+        {
+            Money = initialMoney;
+        }
+
+        public void ShowMoney()
+        {
+            Console.WriteLine($"Количество денег у покупателя: {Money}");
+        }
+
+        public bool TryBuyItem(Item item)
+        {
+            if (item.Cost > Money)
+            {
+                Console.WriteLine($"Недостаточно денег");
+                return false;
+            }
+
+            Items.Add(item);
+            Money -= item.Cost;
+            return true;
+        }
+    }
+
+    public class Person
+    {
+        protected List<Item> Items = new();
+
+        public int ItemsCount => Items.Count;
+
+        public decimal Money { get; protected set; }
+
+        public void ShowItems()
+        {
+            if (Items.Count == 0)
+            {
+                Console.WriteLine($"Пусто");
+                return;
+            }
+
+            var index = 0;
+
+            foreach (var item in Items)
+            {
+                index++;
+                Console.WriteLine($"{index}. {item}");
+            }
+        }
+
+    }
+
+    public class Item
+    {
+        public Item(int id, string name, decimal cost)
         {
             Id = id;
             Name = name;
-            Author = author;
-            Year = year;
+            Cost = cost;
         }
-        
+
         public int Id { get; }
         public string Name { get; }
-        public string Author { get; }
-        public int Year { get; }
+        public decimal Cost { get; }
 
         public override string ToString()
         {
-            return $"Id: {Id},\t Name: {Name.PadRight(15)},\t Author: {Author.PadRight(15)},\t Year: {Year}";
+            return $"Id: {Id}, {Name}, {Cost}$";
         }
     }
 }
