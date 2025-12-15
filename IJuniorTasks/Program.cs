@@ -44,7 +44,7 @@ namespace IJuniorTasks
                         break;
 
                     case CommandBuy:
-                        store.BuyItem();
+                        store.SellItem();
                         break;
 
                     case CommandShowPurchases:
@@ -71,7 +71,7 @@ namespace IJuniorTasks
         public Store()
         {
             _seller = new Seller();
-            _buyer = new Buyer(Buyer.DefaultMoney);
+            _buyer = new Buyer();
         }
 
         public void ShowSellersItems()
@@ -80,7 +80,7 @@ namespace IJuniorTasks
             _seller.ShowItems();
         }
 
-        public void BuyItem()
+        public void SellItem()
         {
             ShowSellersItems();
             Console.WriteLine($"Введите Id товара для покупки:");
@@ -149,11 +149,11 @@ namespace IJuniorTasks
 
     public class Buyer : Person
     {
-        public static decimal DefaultMoney = 20;
+        private static readonly decimal s_defaultMoney = 20;
 
-        public Buyer(decimal initialMoney)
+        public Buyer()
         {
-            Money = initialMoney;
+            Money = s_defaultMoney;
         }
 
         public void ShowMoney()
