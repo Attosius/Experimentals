@@ -1,11 +1,14 @@
-﻿using IJuniorTasks66;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 
 namespace IJuniorTasks
 {
+    public interface IDamageable
+    {
+        void TakeDamage(int damage);
+    }
+
     internal class Program
     {
         static void Main(string[] args)
@@ -64,7 +67,6 @@ namespace IJuniorTasks
 
     public class Coliseum
     {
-
         private readonly List<Fighter> _fighters;
 
         public Coliseum()
@@ -162,12 +164,13 @@ namespace IJuniorTasks
 
                 firstFighter.Attack(secondFighter);
                 Console.WriteLine();
-
                 secondFighter.Attack(firstFighter);
-                Console.WriteLine();
+
+                Console.WriteLine("=====");
                 firstFighter.PaintStats();
                 secondFighter.PaintStats();
-                Console.WriteLine();
+                Console.WriteLine("=====");
+
                 Thread.Sleep(300);
             }
 
@@ -181,8 +184,7 @@ namespace IJuniorTasks
             Console.WriteLine($"Победил {winner.Name}!");
         }
     }
-   
-    
+
     public class Fighter : ICloneable, IDamageable
     {
         public const int MaxPercent = 100;
@@ -202,10 +204,10 @@ namespace IJuniorTasks
         }
 
         public string Name { get; }
+        public int Health { get; protected set; }
         public int MinDamage { get; }
         public int MaxDamage { get; }
         public int Armor { get;  }
-        public int Health { get; protected set; }
 
         public bool IsAlive => Health > 0;
         public bool IsDead => Health <= 0;
@@ -223,15 +225,15 @@ namespace IJuniorTasks
         {
             var width = Health / (double)MaxHealth * BarWidth;
             var color = ConsoleColor.Green;
-            PaintStat(color, width);
+            PaintStat(nameof(Health), color, width);
         }
 
-        protected void PaintStat(ConsoleColor color, double width)
+        public void PaintStat(string barName, ConsoleColor color, double width)
         {
             const string fullBlockSymbol = "\u2588";
             const string verticalSymbol = "\u2502";
 
-            Console.Write($"{Name,-10}: ");
+            Console.Write($"{Name,-10} {barName,-12}: ");
             UserUtils.Write(verticalSymbol, ConsoleColor.White);
 
             for (int i = 0; i < BarWidth; i++)
@@ -245,6 +247,7 @@ namespace IJuniorTasks
                     UserUtils.Write(" ", color);
                 }
             }
+
             UserUtils.WriteLine(verticalSymbol, ConsoleColor.White);
         }
 
@@ -256,9 +259,10 @@ namespace IJuniorTasks
 
         public virtual void TakeDamage(int damage)
         {
-            var finishDamage = damage - Armor;
+            var finishDamage = Math.Max(damage - Armor, 0);
             Console.Write($"{Name}: Броня: {Armor}. Итоговый урон: {finishDamage}. ");
             Health -= finishDamage;
+
             Console.Write($"Остаток жизни: ");
             UserUtils.WriteLine($"{Health}", ConsoleColor.Green);
         }
@@ -275,11 +279,6 @@ namespace IJuniorTasks
             Attack(damageable, damage, incrementAttackCount);
         }
 
-        protected void IncrementAttackCount()
-        {
-            AttackCount++;
-        }
-
         private void Attack(IDamageable damageable, int damage, bool incrementAttackCount)
         {
             Console.Write($"{Name}: Бьет! Урон: ");
@@ -291,6 +290,11 @@ namespace IJuniorTasks
             {
                 IncrementAttackCount();
             }
+        }
+
+        protected void IncrementAttackCount()
+        {
+            AttackCount++;
         }
     }
 
@@ -314,14 +318,13 @@ namespace IJuniorTasks
         {
             var damage = UserUtils.GenerateRandomNumber(MinDamage, MaxDamage);
 
-            Console.Write($"{Name}: Бьет! ");
             if (DoubleDamageAttackPercent > UserUtils.GenerateRandomNumber(MaxPercent))
             {
                 damage *= 2;
-                UserUtils.WriteLine($"\n{Name}: Двойной удар! ", ConsoleColor.Red);
+                UserUtils.WriteLine($"\n{Name}: Двойной урон! ", ConsoleColor.Red);
             }
 
-            Console.Write("Урон: ");
+            Console.Write($"{Name}: Бьет! Урон: ");
             UserUtils.WriteLine(damage.ToString(), ConsoleColor.Red);
             damageable.TakeDamage(damage);
             IncrementAttackCount();
@@ -373,6 +376,7 @@ namespace IJuniorTasks
         {
             DualAttackPeriod = dualAttackPeriod;
         }
+
         public int DualAttackPeriod { get; }
 
         public override void ShowInfo()
@@ -380,7 +384,6 @@ namespace IJuniorTasks
             base.ShowInfo();
             Console.WriteLine($"Способность: вторая атака каждую {DualAttackPeriod} атаку");
         }
-
 
         public override void Attack(IDamageable damageable)
         {
@@ -401,7 +404,7 @@ namespace IJuniorTasks
             widthPart = widthPart == 0 ? DualAttackPeriod : widthPart;
             var width = widthPart / (double)DualAttackPeriod * BarWidth;
             var color = ConsoleColor.DarkYellow;
-            PaintStat(color, width);
+            PaintStat("AttackPeriod", color, width);
         }
 
         public override object Clone()
@@ -453,7 +456,6 @@ namespace IJuniorTasks
                 Console.Write($"Остаток жизни: ");
                 UserUtils.WriteLine($"{Health}", ConsoleColor.Green);
             }
-
         }
 
         public override object Clone()
@@ -462,20 +464,21 @@ namespace IJuniorTasks
         }
     }
 
-
     public class FighterMagician : Fighter
     {
         public FighterMagician(string name, int minDamage, int maxDamage, int armor, int health, int mana, int damageByFireball, int manaCostFireball)
             : base(name, minDamage, maxDamage, armor, health)
         {
-            Mana = mana;
+            MaxMana = mana;
+            Mana = MaxMana;
             DamageByFireball = damageByFireball;
             ManaCostFireball = manaCostFireball;
         }
 
         public int Mana { get; private set; }
-        public int DamageByFireball { get; }
+        public int MaxMana { get; }
         public int ManaCostFireball { get; }
+        public int DamageByFireball { get; }
 
         public override void ShowInfo()
         {
@@ -483,30 +486,32 @@ namespace IJuniorTasks
             Console.WriteLine($"Способность: Огненный шар с уроном {DamageByFireball} требует {ManaCostFireball} маны. Всего маны {Mana}");
         }
 
-        public override void TakeDamage(int damage)
+        public override void Attack(IDamageable damageable)
         {
-            base.TakeDamage(damage);
-
-
-            Mana -= ManaCostFireball;
-            Console.WriteLine($"{Name}: Накоплено {_mana} ярости! ");
-
-            if (_mana >= DamageByFireball)
+            int damage;
+            if (Mana >= ManaCostFireball)
             {
-                _mana = 0;
-                UserUtils.Write($"{Name}: Лимит ярости достигнут! ", ConsoleColor.Red);
-                Health += ManaCostFireball;
-
-                if (Health > MaxHealth)
-                {
-                    Health = MaxHealth;
-                }
-
-                Console.Write($"Лечение на {ManaCostFireball} ");
-                Console.Write($"Остаток жизни: ");
-                UserUtils.WriteLine($"{Health}", ConsoleColor.Green);
+                Mana -= ManaCostFireball;
+                UserUtils.WriteLine($"\n{Name}: Способность Fireball! ", ConsoleColor.Red);
+                damage = DamageByFireball;
+            }
+            else
+            {
+                damage = UserUtils.GenerateRandomNumber(MinDamage, MaxDamage);
             }
 
+            Console.Write($"{Name}: Бьет! Урон: ");
+            UserUtils.WriteLine(damage.ToString(), ConsoleColor.Red);
+            damageable.TakeDamage(damage);
+            IncrementAttackCount();
+        }
+
+        public override void PaintStats()
+        {
+            base.PaintStats();
+            var width = Mana / (double)MaxMana * BarWidth;
+            var color = ConsoleColor.Blue;
+            PaintStat(nameof(Mana), color, width);
         }
 
         public override object Clone()
@@ -515,20 +520,44 @@ namespace IJuniorTasks
         }
     }
 
-    public interface IDamageable
+    public class FighterDodge : Fighter
     {
-        void TakeDamage(int damage);
-    }
+        public FighterDodge(string name, int minDamage, int maxDamage, int armor, int health, int dodgePercent)
+            : base(name, minDamage, maxDamage, armor, health)
+        {
+            DodgePercent = dodgePercent;
+        }
 
+        public int DodgePercent { get; }
+
+        public override void ShowInfo()
+        {
+            base.ShowInfo();
+            Console.WriteLine($"Способность: возможность уклонения с вероятностью {DodgePercent}%");
+        }
+
+        public override void TakeDamage(int damage)
+        {
+            if (DodgePercent > UserUtils.GenerateRandomNumber(MaxPercent))
+            {
+                UserUtils.Write($"{Name}: Уклоняется от удара! ", ConsoleColor.Red);
+                Console.Write($"Остаток жизни: ");
+                UserUtils.WriteLine($"{Health}", ConsoleColor.Green);
+                return;
+            }
+
+            base.TakeDamage(damage);
+        }
+
+        public override object Clone()
+        {
+            return (FighterDodge)base.Clone();
+        }
+    }
 
     public class UserUtils
     {
-        private static Random s_random = new Random();
-
-        public static bool GenerateRandomBool()
-        {
-            return s_random.Next(2) == 0;
-        }
+        private static readonly Random s_random = new();
 
         public static int GenerateRandomNumber(int max)
         {
@@ -565,7 +594,8 @@ namespace IJuniorTasks
                 new FighterDualAttackPercently("Коммод", 15, 20, 10, 100, dualAttackPercent: 30),
                 new FighterDualAttackPeriodically("Aвендиш", 15, 20, 10, 100, dualAttackPeriod: 3),
                 new FighterRage("Максимус", 15, 20, 10, 100, rageByTakeDamage: 10, rageLimit: 30, healthByRage: 15),
-                new Fighter("Фламма ", 15, 20, 10, 100),
+                new FighterMagician("Фламма ", 15, 20, 10, 100, mana: 60, damageByFireball: 28, manaCostFireball : 15),
+                new FighterDodge("Уклонимус", 15, 20, 10, 100, dodgePercent: 30),
             };
 
             return list;
