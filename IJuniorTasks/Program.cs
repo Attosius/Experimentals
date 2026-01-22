@@ -1,9 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 
 namespace IJuniorTasks
 {
+    public interface IDamageable
+    {
+        void TakeDamage(int damage);
+    }
 
     internal class Program
     {
@@ -11,40 +16,48 @@ namespace IJuniorTasks
         {
             var administrator = new Administrator();
             administrator.Run();
-
         }
+    }
+
+    public enum Commands
+    {
+        Fight = 1,
+        Exit
     }
 
     public class Administrator
     {
-        private const string CommandServeClient = "1";
-        private const string CommandExit = "4";
-
         public void Run()
         {
             bool isWork = true;
 
-            var supermarket = new Supermarket();
+            var war = new War();
 
             while (isWork)
             {
-                Console.WriteLine($"В очереди {supermarket.ClientsCount} клиентов");
-                Console.WriteLine($"Заработано {supermarket.Income} pyб.");
+                Console.Clear();
 
                 Console.WriteLine($"\n\nВведите команду:");
-                Console.WriteLine($"{CommandServeClient}. Обслужить клиента");
-                Console.WriteLine($"{CommandExit}. Выход");
+                Console.WriteLine($"{(int)Commands.Fight}. Посмотреть бой");
+                Console.WriteLine($"{(int)Commands.Exit}. Выход");
                 Console.WriteLine();
 
                 var command = Console.ReadLine();
 
-                switch (command)
+                if (!Enum.TryParse<Commands>(command, out var commandEnum))
                 {
-                    case CommandServeClient:
-                        supermarket.ServeClient();
+                    Console.WriteLine($"Некорректная команда!");
+                    continue;
+                }
+
+                switch (commandEnum)
+                {
+
+                    case Commands.Fight:
+                        war.CreateFight();
                         break;
-                        
-                    case CommandExit:
+
+                    case Commands.Exit:
                         isWork = false;
                         break;
 
@@ -52,121 +65,232 @@ namespace IJuniorTasks
                         Console.WriteLine($"Некорректная команда!");
                         break;
                 }
-
-                Console.ReadKey();
-                Console.Clear();
             }
         }
     }
 
-    public class Supermarket
+    public class War
     {
-        private const int InitalClientsCount = 10;
-        
 
-        private readonly List<Product> _products;
-        private readonly Queue<Client> _clients = new Queue<Client>();
-
-        public int ClientsCount => _clients.Count;
-        public int Income { get; private set}
-
-        public Supermarket()
+        public War()
         {
-            _products = ProductsHub.GetProducts();
-            AddClients();
         }
         
-        public void ServeClient()
+        public void CreateFight()
         {
-            var client = _clients.Dequeue();
-            client.FillBasket(_products);
+            var firstSquad = new Squad("First");
+            firstSquad.CreateSquad();
 
-            for (int i = 0; i < client.; i++)
-            {
-                
-            }
+            var secondSquad = new Squad("Second");
+            secondSquad.CreateSquad();
+
+            var battleField = new BattleField();
+            battleField.Fight(firstSquad, secondSquad);
+            Console.ReadLine();
         }
-
-        private void AddClients()
-        {
-            for (int i = 0; i < InitalClientsCount; i++)
-            {
-                _clients.Enqueue(ClientsHub.GetNewClient());
-            }
-        }
-
+        
+        
     }
 
-    public class Client
+    public class BattleField
     {
-        private const int MaxProductsInBasket = 5;
-        public decimal Money { get; private set; }
-
-        private List<Product> _basketProducts = new List<Product>();
-        private List<Product> _bag = new List<Product>();
-
-
-        public Client(decimal money)
+        public void Fight(Squad firstSquad, Squad secondSquad)
         {
-            Money = money;
+            UserUtils.WriteLine($"Бой между {firstSquad.Name} и {secondSquad.Name}!", ConsoleColor.Cyan);
+            Thread.Sleep(500);
+
+            var round = 0;
+
+            while (firstSquad.IsAlive && secondSquad.IsAlive)
+            {
+                UserUtils.WriteLine($"\nРаунд {++round}!", ConsoleColor.DarkGray);
+
+                firstSquad.Attack(secondSquad);
+                Console.WriteLine();
+                secondSquad.Attack(firstSquad);
+
+
+                Console.WriteLine();
+                Console.WriteLine("=====");
+                firstSquad.PaintStats();
+                secondSquad.PaintStats();
+                Console.WriteLine("=====");
+
+                firstSquad.CleanFighters();
+                secondSquad.CleanFighters();
+                Thread.Sleep(400);
+            }
+
+            ShowFightResult(firstSquad, secondSquad);
         }
 
-        public void FillBasket(List<Product> availableProducts)
+        private static void ShowFightResult(Squad firstSquad, Squad secondSquad)
         {
-            var productsCount = UserUtils.GenerateRandomNumber(MaxProductsInBasket);
-
-            for (int i = 0; i < productsCount; i++)
-            {
-                var productIndex = UserUtils.GenerateRandomNumber(availableProducts.Count);
-                _basketProducts.Add(availableProducts[productIndex]);
-            }
+            var winner = firstSquad.IsAlive ? firstSquad : secondSquad;
+            UserUtils.WriteLine($"\nПобедил {winner.Name}!", ConsoleColor.Cyan);
         }
     }
 
-    public class Product
+    public class Squad
     {
-        public string Name { get; }
-        public decimal Price { get; }
+        public const int FighterCounts = 10;
+        private List<Fighter> _fighters = new List<Fighter>();
+        private readonly FightersFactory _fightersFactory = new FightersFactory();
 
-        public Product(string name, decimal price)
+
+        public Squad(string name)
         {
             Name = name;
-            Price = price;
+        }
+
+        public string Name { get; }
+        public bool IsAlive => _fighters.Count(fighter => fighter.IsAlive) > 0;
+
+        public void CreateSquad()
+        {
+            for (int i = 0; i < FighterCounts; i++)
+            {
+                var fighter = _fightersFactory.GetFighter(Name);
+                _fighters.Add(fighter);
+            }
+        }
+
+        public void Attack(Squad secondSquad)
+        {
+            for (int i = 0; i < _fighters.Count; i++)
+            {
+                if (!secondSquad.IsAlive)
+                {
+                    return;
+                }
+
+                var fighter = _fighters[i];
+                
+                var fighterTarget = secondSquad.GetRandomAliveFighter();
+                fighter.Attack(fighterTarget);
+            }
+        }
+
+        private Fighter GetRandomAliveFighter()
+        {
+            var aliveFighters = _fighters
+                .Where(item => item.IsAlive)
+                .ToList();
+            var randomIndex = UserUtils.GenerateRandomNumber(aliveFighters.Count - 1);
+            return aliveFighters[randomIndex];
+        }
+
+        public void PaintStats()
+        {
+            var alive = _fighters.Count(item => item.IsAlive);
+            PaintStat(ConsoleColor.Green, alive);
+            var dead = _fighters.Count(item => item.IsDead);
+            Console.WriteLine($"В живых {alive} бойцов, в последней атаке погибло {dead}.");
+        }
+
+        public void PaintStat(ConsoleColor color, double width)
+        {
+            const string FullBlockSymbol = "\u2588";
+            const string VerticalSymbol = "\u2502";
+
+            Console.Write($"{$"{Name}:",-7}");
+            UserUtils.Write(VerticalSymbol, ConsoleColor.White);
+
+            for (int i = 0; i < FighterCounts; i++)
+            {
+                if (i < width)
+                {
+                    UserUtils.Write(FullBlockSymbol, color);
+                }
+                else
+                {
+                    UserUtils.Write(FullBlockSymbol, ConsoleColor.Red);
+                }
+            }
+
+            UserUtils.WriteLine(VerticalSymbol, ConsoleColor.White);
+        }
+
+        public void CleanFighters()
+        {
+            _fighters = _fighters.Where(item => item.IsAlive).ToList();
         }
     }
 
-    public static class ClientsHub
+    public class Fighter : IDamageable
     {
-        private const decimal MinClientMoney = 20;
-        private const decimal MaxClientMoney = 100;
+        public const int MaxPercent = 100;
 
-        public static Client GetNewClient()
+        public static int FightersCount { get; private set; }
+
+        protected int AttackCount;
+        protected int MaxHealth;
+
+        public Fighter(string squadName, int minDamage, int maxDamage, int armor, int health)
         {
-            var clientMoney = UserUtils.GenerateRandomNumber((int)MinClientMoney, (int)MaxClientMoney);
-            return new Client(clientMoney);
+            Name = $"Fighter #{++FightersCount} <{squadName}>";
+            MinDamage = minDamage;
+            MaxDamage = maxDamage;
+            Armor = armor;
+            Health = health;
+            MaxHealth = health;
+        }
+
+        public string Name { get; }
+        public int Health { get; protected set; }
+        public int MinDamage { get; }
+        public int MaxDamage { get; }
+        public int Armor { get; }
+
+        public bool IsAlive => Health > 0;
+        public bool IsDead => Health <= 0;
+        
+        public virtual void TakeDamage(int damage)
+        {
+            var finishDamage = Math.Max(damage - Armor, 0);
+            Console.Write($"Урон! {Name}: Броня: {Armor}. Итоговый урон: {finishDamage}. ");
+            Health -= finishDamage;
+
+            Console.Write($"Остаток жизни: ");
+            UserUtils.WriteLine($"{Health}", ConsoleColor.Green);
+
+            if (Health < 0)
+            {
+                UserUtils.WriteLine($"Боец {Name} погиб" , ConsoleColor.Red);
+            }
+        }
+
+        public virtual void Attack(IDamageable damageable)
+        {
+            var damage = UserUtils.GenerateRandomNumber(MinDamage, MaxDamage);
+            Attack(damageable, damage, true);
+        }
+
+        protected void Attack(IDamageable damageable, bool incrementAttackCount)
+        {
+            var damage = UserUtils.GenerateRandomNumber(MinDamage, MaxDamage);
+            Attack(damageable, damage, incrementAttackCount);
+        }
+
+        protected void Attack(IDamageable damageable, int damage, bool incrementAttackCount = true)
+        {
+            Console.Write($"\nУдар! {Name}: Бьет! Урон: ");
+            UserUtils.Write(damage.ToString(), ConsoleColor.Red);
+            Console.WriteLine();
+            damageable.TakeDamage(damage);
+
+            if (incrementAttackCount)
+            {
+                IncrementAttackCount();
+            }
+        }
+
+        protected void IncrementAttackCount()
+        {
+            AttackCount++;
         }
     }
-
-    public static class ProductsHub
-    {
-        private static readonly List<Product> s_products = new ();
-
-        static ProductsHub()
-        {
-            s_products.Add(new Product("Хлеб", 10));
-            s_products.Add(new Product("Мясо", 50));
-            s_products.Add(new Product("Молоко", 20));
-            s_products.Add(new Product("Шоколад", 50));
-            s_products.Add(new Product("Кофе", 60));
-            s_products.Add(new Product("Коньяк", 80));
-        }
-
-        public static List<Product> GetProducts()
-        {
-            return s_products.ToList();
-        }
-    }
-
+    
 
     public class UserUtils
     {
@@ -194,6 +318,15 @@ namespace IJuniorTasks
             Console.ForegroundColor = color;
             Console.Write(data);
             Console.ForegroundColor = initColor;
+        }
+    }
+
+    public class FightersFactory
+    {
+        public Fighter GetFighter(string squadName)
+        {
+            var fighter = new Fighter(squadName, minDamage: 15, maxDamage: 20, armor: 10, health: 100);
+            return fighter;
         }
     }
 }
