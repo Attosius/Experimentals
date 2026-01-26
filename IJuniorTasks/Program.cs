@@ -299,7 +299,7 @@ namespace IJuniorTasks
             }
         }
 
-        public virtual Fighter CreateNew(string squadName)
+        public virtual Fighter Clone(string squadName)
         {
             return new Fighter(squadName, MinDamage, MaxDamage, Armor, Health);
         }
@@ -331,7 +331,7 @@ namespace IJuniorTasks
             fighterTarget.TakeDamage(damage);
         }
 
-        public override Fighter CreateNew(string squadName)
+        public override Fighter Clone(string squadName)
         {
             return new FighterDoubleDamage(squadName, MinDamage, MaxDamage, Armor, Health, _damageMultiplier);
         }
@@ -374,7 +374,7 @@ namespace IJuniorTasks
             }
         }
 
-        public override Fighter CreateNew(string squadName)
+        public override Fighter Clone(string squadName)
         {
             return new FighterMultipleDifferentHit(squadName, MinDamage, MaxDamage, Armor, Health, _attacksCountPerRound);
         }
@@ -413,7 +413,7 @@ namespace IJuniorTasks
             }
         }
 
-        public override Fighter CreateNew(string squadName)
+        public override Fighter Clone(string squadName)
         {
             return new FighterMultipleHit(squadName, MinDamage, MaxDamage, Armor, Health, _attacksCountPerRound);
         }
@@ -435,7 +435,7 @@ namespace IJuniorTasks
         {
             var fighterTypeIndex = UserUtils.GenerateRandomNumber(_availableFighters.Count - 1);
             var fighterPrefab = _availableFighters[fighterTypeIndex];
-            return fighterPrefab.CreateNew(squadName);
+            return fighterPrefab.Clone(squadName);
         }
     }
 
