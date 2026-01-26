@@ -5,9 +5,11 @@ using System.Threading;
 
 namespace IJuniorTasks
 {
-    public interface IDamageable
+    public interface IPullFighterSquad
     {
-        void TakeDamage(int damage);
+        Fighter GetRandomAliveFighter();
+        bool TryGetRandomAliveFighterExcept(HashSet<Fighter> exceptFighters, out Fighter fighterTarget);
+        bool IsAlive { get; }
     }
 
     internal class Program
@@ -30,7 +32,6 @@ namespace IJuniorTasks
         public void Run()
         {
             bool isWork = true;
-
             var war = new War();
 
             while (isWork)
@@ -44,7 +45,7 @@ namespace IJuniorTasks
 
                 var command = Console.ReadLine();
 
-                if (!Enum.TryParse<Commands>(command, out var commandEnum))
+                if (Enum.TryParse<Commands>(command, out var commandEnum) == false)
                 {
                     Console.WriteLine($"Некорректная команда!");
                     continue;
@@ -71,25 +72,22 @@ namespace IJuniorTasks
 
     public class War
     {
-
-        public War()
-        {
-        }
-        
         public void CreateFight()
         {
             var firstSquad = new Squad("First");
-            firstSquad.CreateSquad();
+            firstSquad.Create();
+            firstSquad.ShowFighters();
+            Console.WriteLine();
 
             var secondSquad = new Squad("Second");
-            secondSquad.CreateSquad();
+            secondSquad.Create();
+            secondSquad.ShowFighters();
+            Console.ReadLine();
 
             var battleField = new BattleField();
             battleField.Fight(firstSquad, secondSquad);
             Console.ReadLine();
         }
-        
-        
     }
 
     public class BattleField
@@ -131,12 +129,12 @@ namespace IJuniorTasks
         }
     }
 
-    public class Squad
+    public class Squad : IPullFighterSquad
     {
-        public const int FighterCounts = 10;
-        private List<Fighter> _fighters = new List<Fighter>();
-        private readonly FightersFactory _fightersFactory = new FightersFactory();
+        private const int FighterCounts = 10;
 
+        private List<Fighter> _fighters = new();
+        private readonly FightersFactory _fightersFactory = new();
 
         public Squad(string name)
         {
@@ -146,11 +144,11 @@ namespace IJuniorTasks
         public string Name { get; }
         public bool IsAlive => _fighters.Count(fighter => fighter.IsAlive) > 0;
 
-        public void CreateSquad()
+        public void Create()
         {
             for (int i = 0; i < FighterCounts; i++)
             {
-                var fighter = _fightersFactory.GetFighter(Name);
+                var fighter = _fightersFactory.GetRandomFighter(Name);
                 _fighters.Add(fighter);
             }
         }
@@ -159,25 +157,41 @@ namespace IJuniorTasks
         {
             for (int i = 0; i < _fighters.Count; i++)
             {
-                if (!secondSquad.IsAlive)
+                if (secondSquad.IsAlive == false)
                 {
                     return;
                 }
 
                 var fighter = _fighters[i];
-                
-                var fighterTarget = secondSquad.GetRandomAliveFighter();
-                fighter.Attack(fighterTarget);
+                fighter.Attack(secondSquad);
             }
         }
 
-        private Fighter GetRandomAliveFighter()
+        public Fighter GetRandomAliveFighter()
         {
             var aliveFighters = _fighters
                 .Where(item => item.IsAlive)
                 .ToList();
             var randomIndex = UserUtils.GenerateRandomNumber(aliveFighters.Count - 1);
             return aliveFighters[randomIndex];
+        }
+
+        public bool TryGetRandomAliveFighterExcept(HashSet<Fighter> exceptFighters, out Fighter fighterTarget)
+        {
+            fighterTarget = null;
+            var aliveExceptFighters = _fighters
+                .Where(item => item.IsAlive)
+                .Where(item => exceptFighters.Contains(item) == false)
+                .ToList();
+
+            if (aliveExceptFighters.Count == 0)
+            {
+                return false;
+            }
+
+            var randomIndex = UserUtils.GenerateRandomNumber(aliveExceptFighters.Count - 1);
+            fighterTarget = aliveExceptFighters[randomIndex];
+            return true;
         }
 
         public void PaintStats()
@@ -215,20 +229,29 @@ namespace IJuniorTasks
         {
             _fighters = _fighters.Where(item => item.IsAlive).ToList();
         }
+
+        public void ShowFighters()
+        {
+            Console.WriteLine($"Взвод {Name}:");
+
+            for (int i = 0; i < _fighters.Count; i++)
+            {
+                Console.Write($"{i + 1:00}. Боец ");
+                _fighters[i].ShowInfo();
+                Console.WriteLine();
+            }
+        }
     }
 
-    public class Fighter : IDamageable
+    public class Fighter
     {
-        public const int MaxPercent = 100;
-
-        public static int FightersCount { get; private set; }
-
-        protected int AttackCount;
+        private static int s_fightersCount = 0;
+        
         protected int MaxHealth;
 
         public Fighter(string squadName, int minDamage, int maxDamage, int armor, int health)
         {
-            Name = $"Fighter #{++FightersCount} <{squadName}>";
+            Name = $"Fighter #{++s_fightersCount} <{squadName}>";
             MinDamage = minDamage;
             MaxDamage = maxDamage;
             Armor = armor;
@@ -244,7 +267,23 @@ namespace IJuniorTasks
 
         public bool IsAlive => Health > 0;
         public bool IsDead => Health <= 0;
-        
+
+        public virtual void ShowInfo()
+        {
+            UserUtils.Write($"{Name}, простой рубака", ConsoleColor.White);
+        }
+
+        public virtual void Attack(IPullFighterSquad targetSquad)
+        {
+            var damage = UserUtils.GenerateRandomNumber(MinDamage, MaxDamage);
+            Console.Write($"\nУдар! {Name}: Бьет! Урон: ");
+            UserUtils.Write(damage.ToString(), ConsoleColor.Red);
+            Console.WriteLine();
+
+            var fighterTarget = targetSquad.GetRandomAliveFighter();
+            fighterTarget.TakeDamage(damage);
+        }
+
         public virtual void TakeDamage(int damage)
         {
             var finishDamage = Math.Max(damage - Armor, 0);
@@ -256,41 +295,149 @@ namespace IJuniorTasks
 
             if (Health < 0)
             {
-                UserUtils.WriteLine($"Боец {Name} погиб" , ConsoleColor.Red);
+                UserUtils.WriteLine($"Боец {Name} погиб", ConsoleColor.Red);
             }
         }
 
-        public virtual void Attack(IDamageable damageable)
+        public virtual Fighter CreateNew(string squadName)
         {
-            var damage = UserUtils.GenerateRandomNumber(MinDamage, MaxDamage);
-            Attack(damageable, damage, true);
-        }
-
-        protected void Attack(IDamageable damageable, bool incrementAttackCount)
-        {
-            var damage = UserUtils.GenerateRandomNumber(MinDamage, MaxDamage);
-            Attack(damageable, damage, incrementAttackCount);
-        }
-
-        protected void Attack(IDamageable damageable, int damage, bool incrementAttackCount = true)
-        {
-            Console.Write($"\nУдар! {Name}: Бьет! Урон: ");
-            UserUtils.Write(damage.ToString(), ConsoleColor.Red);
-            Console.WriteLine();
-            damageable.TakeDamage(damage);
-
-            if (incrementAttackCount)
-            {
-                IncrementAttackCount();
-            }
-        }
-
-        protected void IncrementAttackCount()
-        {
-            AttackCount++;
+            return new Fighter(squadName, MinDamage, MaxDamage, Armor, Health);
         }
     }
-    
+
+    public class FighterDoubleDamage : Fighter
+    {
+        private readonly int _damageMultiplier;
+
+        public FighterDoubleDamage(string name, int minDamage, int maxDamage, int armor, int health, int damageMultiplier)
+            : base(name, minDamage, maxDamage, armor, health)
+        {
+            _damageMultiplier = damageMultiplier;
+        }
+
+        public override void ShowInfo()
+        {
+            UserUtils.Write($"{Name}, урон x{_damageMultiplier}", ConsoleColor.DarkYellow);
+        }
+
+        public override void Attack(IPullFighterSquad targetSquad)
+        {
+            var fighterTarget = targetSquad.GetRandomAliveFighter();
+
+            var damage = UserUtils.GenerateRandomNumber(MinDamage, MaxDamage);
+            damage *= _damageMultiplier;
+            UserUtils.WriteLine($"\nУдар! {Name}: Урон x{_damageMultiplier}: {damage}", ConsoleColor.DarkRed);
+
+            fighterTarget.TakeDamage(damage);
+        }
+
+        public override Fighter CreateNew(string squadName)
+        {
+            return new FighterDoubleDamage(squadName, MinDamage, MaxDamage, Armor, Health, _damageMultiplier);
+        }
+    }
+
+    public class FighterMultipleDifferentHit : Fighter
+    {
+        private readonly int _attacksCountPerRound;
+
+        public FighterMultipleDifferentHit(string name, int minDamage, int maxDamage, int armor, int health, int attacksCountPerRound)
+            : base(name, minDamage, maxDamage, armor, health)
+        {
+            _attacksCountPerRound = attacksCountPerRound;
+        }
+
+        public override void ShowInfo()
+        {
+            UserUtils.Write($"{Name}, множественная атака всегда разных целей", ConsoleColor.DarkRed);
+        }
+        
+        public override void Attack(IPullFighterSquad targetSquad)
+        {
+            var fightersTargetsAlreadyHit = new HashSet<Fighter>();
+
+            for (int i = 0; i < _attacksCountPerRound; i++)
+            {
+                var attackCountText = $"Множественная атака #{i + 1}";
+
+                if (targetSquad.TryGetRandomAliveFighterExcept(fightersTargetsAlreadyHit, out var fighterTarget) == false)
+                {
+                    UserUtils.WriteLine($"\nПопытка удара! {Name}: {attackCountText}: нет цели для удара!", ConsoleColor.Cyan);
+                    return;
+                }
+            
+                var damage = UserUtils.GenerateRandomNumber(MinDamage, MaxDamage);
+                UserUtils.WriteLine($"\nУдар! {Name}: {attackCountText}: {damage}", ConsoleColor.DarkRed);
+
+                fighterTarget.TakeDamage(damage);
+                fightersTargetsAlreadyHit.Add(fighterTarget);
+            }
+        }
+
+        public override Fighter CreateNew(string squadName)
+        {
+            return new FighterMultipleDifferentHit(squadName, MinDamage, MaxDamage, Armor, Health, _attacksCountPerRound);
+        }
+    }
+
+    public class FighterMultipleHit : Fighter
+    {
+        private readonly int _attacksCountPerRound;
+
+        public FighterMultipleHit(string name, int minDamage, int maxDamage, int armor, int health, int attacksCountPerRound)
+            : base(name, minDamage, maxDamage, armor, health)
+        {
+            _attacksCountPerRound = attacksCountPerRound;
+        }
+
+        public override void ShowInfo()
+        {
+            UserUtils.Write($"{Name}, множественная атака в т.ч. одной цели", ConsoleColor.DarkCyan);
+        }
+
+        public override void Attack(IPullFighterSquad targetSquad)
+        {
+            for (int i = 0; i < _attacksCountPerRound; i++)
+            {
+                if (targetSquad.IsAlive == false)
+                {
+                    return;
+                }
+
+                var fighterTarget = targetSquad.GetRandomAliveFighter();
+
+                var damage = UserUtils.GenerateRandomNumber(MinDamage, MaxDamage);
+                UserUtils.WriteLine($"\nУдар! {Name}: Множественная атака #{i + 1}: {damage}", ConsoleColor.DarkRed);
+
+                fighterTarget.TakeDamage(damage);
+            }
+        }
+
+        public override Fighter CreateNew(string squadName)
+        {
+            return new FighterMultipleHit(squadName, MinDamage, MaxDamage, Armor, Health, _attacksCountPerRound);
+        }
+    }
+
+    public class FightersFactory
+    {
+        private readonly List<Fighter> _availableFighters = new List<Fighter>();
+
+        public FightersFactory()
+        {
+            _availableFighters.Add(new Fighter(default, minDamage: 15, maxDamage: 20, armor: 10, health: 100));
+            _availableFighters.Add(new FighterDoubleDamage(default, minDamage: 15, maxDamage: 20, armor: 10, health: 100, damageMultiplier: 2));
+            _availableFighters.Add(new FighterMultipleDifferentHit(default, minDamage: 15, maxDamage: 20, armor: 10, health: 100, attacksCountPerRound: 2));
+            _availableFighters.Add(new FighterMultipleHit(default, minDamage: 15, maxDamage: 20, armor: 10, health: 100, attacksCountPerRound: 2));
+        }
+
+        public Fighter GetRandomFighter(string squadName)
+        {
+            var fighterTypeIndex = UserUtils.GenerateRandomNumber(_availableFighters.Count - 1);
+            var fighterPrefab = _availableFighters[fighterTypeIndex];
+            return fighterPrefab.CreateNew(squadName);
+        }
+    }
 
     public class UserUtils
     {
@@ -318,15 +465,6 @@ namespace IJuniorTasks
             Console.ForegroundColor = color;
             Console.Write(data);
             Console.ForegroundColor = initColor;
-        }
-    }
-
-    public class FightersFactory
-    {
-        public Fighter GetFighter(string squadName)
-        {
-            var fighter = new Fighter(squadName, minDamage: 15, maxDamage: 20, armor: 10, health: 100);
-            return fighter;
         }
     }
 }
