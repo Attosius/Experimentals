@@ -153,7 +153,7 @@ namespace IJuniorTasks
             }
         }
 
-        public void Attack(Squad secondSquad)
+        public void Attack(IPullFighterSquad secondSquad)
         {
             for (int i = 0; i < _fighters.Count; i++)
             {
@@ -245,9 +245,7 @@ namespace IJuniorTasks
 
     public class Fighter
     {
-        private static int s_fightersCount = 0;
-        
-        protected int MaxHealth;
+        private static int s_fightersCount;
 
         public Fighter(string squadName, int minDamage, int maxDamage, int armor, int health)
         {
@@ -256,7 +254,6 @@ namespace IJuniorTasks
             MaxDamage = maxDamage;
             Armor = armor;
             Health = health;
-            MaxHealth = health;
         }
 
         public string Name { get; }
