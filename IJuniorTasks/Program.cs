@@ -1,17 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
 
 namespace IJuniorTasks
 {
-    public interface IPullFighterSquad
-    {
-        Fighter GetRandomAliveFighter();
-        bool TryGetRandomAliveFighterExcept(HashSet<Fighter> exceptFighters, out Fighter fighterTarget);
-        bool IsAlive { get; }
-    }
-
     internal class Program
     {
         static void Main(string[] args)
@@ -23,8 +14,10 @@ namespace IJuniorTasks
 
     public enum Commands
     {
-        Fight = 1,
-        Exit
+        AddDay = 1,
+        AddFish,
+        GetFish,
+        Exit,
     }
 
     public class Administrator
@@ -32,14 +25,17 @@ namespace IJuniorTasks
         public void Run()
         {
             bool isWork = true;
-            var war = new War();
+            var aquarium = new Aquarium();
 
             while (isWork)
             {
                 Console.Clear();
+                aquarium.PaintStats();
 
                 Console.WriteLine($"\n\nВведите команду:");
-                Console.WriteLine($"{(int)Commands.Fight}. Посмотреть бой");
+                Console.WriteLine($"{(int)Commands.AddDay}. Прожить день");
+                Console.WriteLine($"{(int)Commands.AddFish}. Добавить рыбку");
+                Console.WriteLine($"{(int)Commands.GetFish}. Достать рыбку");
                 Console.WriteLine($"{(int)Commands.Exit}. Выход");
                 Console.WriteLine();
 
@@ -54,8 +50,16 @@ namespace IJuniorTasks
                 switch (commandEnum)
                 {
 
-                    case Commands.Fight:
-                        war.CreateFight();
+                    case Commands.AddDay:
+                        aquarium.AddDay();
+                        break;
+
+                    case Commands.AddFish:
+                        aquarium.AddFish();
+                        break;
+
+                    case Commands.GetFish:
+                        aquarium.GetFish();
                         break;
 
                     case Commands.Exit:
@@ -70,369 +74,158 @@ namespace IJuniorTasks
         }
     }
 
-    public class War
+    public class Aquarium
     {
-        public void CreateFight()
+        public const int MaxFish = 10;
+
+        private readonly List<Fish> _fish = new();
+        private readonly FishFactory _fishFactory;
+
+        public Aquarium()
         {
-            var firstSquad = new Squad("First");
-            firstSquad.Create();
-            firstSquad.ShowFighters();
-            Console.WriteLine();
-
-            var secondSquad = new Squad("Second");
-            secondSquad.Create();
-            secondSquad.ShowFighters();
-            Console.ReadLine();
-
-            var battleField = new BattleField();
-            battleField.Fight(firstSquad, secondSquad);
-            Console.ReadLine();
+            _fishFactory = new FishFactory();
         }
-    }
 
-    public class BattleField
-    {
-        public void Fight(Squad firstSquad, Squad secondSquad)
+        public int AquariumAge { get; private set; }
+
+        public void AddDay()
         {
-            UserUtils.WriteLine($"Бой между {firstSquad.Name} и {secondSquad.Name}!", ConsoleColor.Cyan);
-            Thread.Sleep(500);
+            AquariumAge++;
+            var deadFishes = new List<Fish>();
 
-            var round = 0;
-
-            while (firstSquad.IsAlive && secondSquad.IsAlive)
+            for (int i = 0; i < _fish.Count; i++)
             {
-                UserUtils.WriteLine($"\nРаунд {++round}!", ConsoleColor.DarkGray);
+                var fish = _fish[i];
+                fish.AddDay();
 
-                firstSquad.Attack(secondSquad);
-                Console.WriteLine();
-                secondSquad.Attack(firstSquad);
-
-
-                Console.WriteLine();
-                Console.WriteLine("=====");
-                firstSquad.PaintStats();
-                secondSquad.PaintStats();
-                Console.WriteLine("=====");
-
-                firstSquad.CleanFighters();
-                secondSquad.CleanFighters();
-                Thread.Sleep(400);
-            }
-
-            ShowFightResult(firstSquad, secondSquad);
-        }
-
-        private static void ShowFightResult(Squad firstSquad, Squad secondSquad)
-        {
-            var winner = firstSquad.IsAlive ? firstSquad : secondSquad;
-            UserUtils.WriteLine($"\nПобедил {winner.Name}!", ConsoleColor.Cyan);
-        }
-    }
-
-    public class Squad : IPullFighterSquad
-    {
-        private const int FighterCounts = 10;
-
-        private List<Fighter> _fighters = new();
-        private readonly FightersFactory _fightersFactory = new();
-
-        public Squad(string name)
-        {
-            Name = name;
-        }
-
-        public string Name { get; }
-        public bool IsAlive => _fighters.Count(fighter => fighter.IsAlive) > 0;
-
-        public void Create()
-        {
-            for (int i = 0; i < FighterCounts; i++)
-            {
-                var fighter = _fightersFactory.GetRandomFighter(Name);
-                _fighters.Add(fighter);
-            }
-        }
-
-        public void Attack(IPullFighterSquad secondSquad)
-        {
-            for (int i = 0; i < _fighters.Count; i++)
-            {
-                if (secondSquad.IsAlive == false)
+                if (fish.IsAlive == false)
                 {
-                    return;
+                    deadFishes.Add(fish);
+                }
+            }
+
+
+            if (deadFishes.Count > 0)
+            {
+                foreach (var deadFish in deadFishes)
+                {
+                    _fish.Remove(deadFish);
+                    Console.Write($"Рыбка ");
+                    UserUtils.Write($"{deadFish.Name}", ConsoleColor.Cyan);
+                    Console.WriteLine($" умерла :(");
                 }
 
-                var fighter = _fighters[i];
-                fighter.Attack(secondSquad);
+                Console.ReadKey();
             }
         }
 
-        public Fighter GetRandomAliveFighter()
+        public void AddFish()
         {
-            var aliveFighters = _fighters
-                .Where(item => item.IsAlive)
-                .ToList();
-            var randomIndex = UserUtils.GenerateRandomNumber(aliveFighters.Count - 1);
-            return aliveFighters[randomIndex];
-        }
-
-        public bool TryGetRandomAliveFighterExcept(HashSet<Fighter> exceptFighters, out Fighter fighterTarget)
-        {
-            fighterTarget = null;
-            var aliveExceptFighters = _fighters
-                .Where(item => item.IsAlive)
-                .Where(item => exceptFighters.Contains(item) == false)
-                .ToList();
-
-            if (aliveExceptFighters.Count == 0)
+            if (_fish.Count >= MaxFish)
             {
-                return false;
+                Console.Write($"Аквариум уже заполнен полностью!");
+                Console.ReadKey();
+                return;
             }
 
-            var randomIndex = UserUtils.GenerateRandomNumber(aliveExceptFighters.Count - 1);
-            fighterTarget = aliveExceptFighters[randomIndex];
-            return true;
+            var fish = _fishFactory.CreateRandomFish();
+            _fish.Add(fish);
+
+            Console.Write($"В аквариум добавили ");
+            UserUtils.Write($"{fish.Name}", ConsoleColor.Cyan);
+            Console.WriteLine($", ee максимальный возраст: {fish.MaxLife}");
+            Console.ReadKey();
         }
 
         public void PaintStats()
         {
-            var alive = _fighters.Count(item => item.IsAlive);
-            PaintStat(ConsoleColor.Green, alive);
-            var dead = _fighters.Count(item => item.IsDead);
-            Console.WriteLine($"В живых {alive} бойцов, в последней атаке погибло {dead}.");
-        }
+            Console.WriteLine($"Возраст аквариума {AquariumAge}");
+            Console.Write($"Сейчас в аквариуме ");
 
-        public void PaintStat(ConsoleColor color, double width)
-        {
-            const string FullBlockSymbol = "\u2588";
-            const string VerticalSymbol = "\u2502";
-
-            Console.Write($"{$"{Name}:",-7}");
-            UserUtils.Write(VerticalSymbol, ConsoleColor.White);
-
-            for (int i = 0; i < FighterCounts; i++)
+            if (_fish.Count == 0)
             {
-                if (i < width)
-                {
-                    UserUtils.Write(FullBlockSymbol, color);
-                }
-                else
-                {
-                    UserUtils.Write(FullBlockSymbol, ConsoleColor.Red);
-                }
+                UserUtils.Write($"пусто :(", ConsoleColor.Yellow);
+                return;
             }
 
-            UserUtils.WriteLine(VerticalSymbol, ConsoleColor.White);
-        }
+            Console.Write($"рыбок: ");
+            UserUtils.WriteLine($"{_fish.Count}.", ConsoleColor.Cyan);
 
-        public void CleanFighters()
-        {
-            _fighters = _fighters.Where(item => item.IsAlive).ToList();
-        }
-
-        public void ShowFighters()
-        {
-            Console.WriteLine($"Взвод {Name}:");
-
-            for (int i = 0; i < _fighters.Count; i++)
+            for (int i = 0; i < _fish.Count; i++)
             {
-                Console.Write($"{i + 1:00}. Боец ");
-                _fighters[i].ShowInfo();
-                Console.WriteLine();
+                var fish = _fish[i];
+                Console.Write($"{i + 1}. Рыбка ");
+                UserUtils.Write($"{fish.Name}", ConsoleColor.Cyan);
+                Console.WriteLine($", ee возраст: {fish.CurrentLife} из {fish.MaxLife}");
             }
+
+        }
+
+        public void GetFish()
+        {
+            PaintStats();
+
+            Console.WriteLine($"Введите номер рыбки, которую хотите достать:");
+            var indexText = Console.ReadLine();
+
+            if (int.TryParse(indexText, out var index) == false || index > _fish.Count || index < 1)
+            {
+                Console.WriteLine($"Некорректный индекс!");
+                Console.ReadKey();
+                return;
+            }
+
+            var fish = _fish[index - 1];
+            _fish.Remove(fish);
+
+            Console.Write($"Рыбку ");
+            UserUtils.Write($"{fish.Name}", ConsoleColor.Cyan);
+            Console.WriteLine($" достали из аквариума");
+            Console.ReadKey();
         }
     }
 
-    public class Fighter
+    public class Fish
     {
-        private static int s_fightersCount;
-
-        public Fighter(string squadName, int minDamage, int maxDamage, int armor, int health)
+        public Fish(string name, int maxLife)
         {
-            Name = $"Fighter #{++s_fightersCount} <{squadName}>";
-            MinDamage = minDamage;
-            MaxDamage = maxDamage;
-            Armor = armor;
-            Health = health;
+            Name = name;
+            MaxLife = maxLife;
         }
 
         public string Name { get; }
-        public int Health { get; protected set; }
-        public int MinDamage { get; }
-        public int MaxDamage { get; }
-        public int Armor { get; }
+        public int MaxLife { get; }
+        public int CurrentLife { get; private set; }
+        public bool IsAlive => CurrentLife < MaxLife;
 
-        public bool IsAlive => Health > 0;
-        public bool IsDead => Health <= 0;
-
-        public virtual void ShowInfo()
+        public void AddDay()
         {
-            UserUtils.Write($"{Name}, простой рубака", ConsoleColor.White);
+            CurrentLife++;
         }
 
-        public virtual void Attack(IPullFighterSquad targetSquad)
+        public Fish Clone()
         {
-            var damage = UserUtils.GenerateRandomNumber(MinDamage, MaxDamage);
-            Console.Write($"\nУдар! {Name}: Бьет! Урон: ");
-            UserUtils.Write(damage.ToString(), ConsoleColor.Red);
-            Console.WriteLine();
-
-            var fighterTarget = targetSquad.GetRandomAliveFighter();
-            fighterTarget.TakeDamage(damage);
-        }
-
-        public virtual void TakeDamage(int damage)
-        {
-            var finishDamage = Math.Max(damage - Armor, 0);
-            Console.Write($"Урон! {Name}: Броня: {Armor}. Итоговый урон: {finishDamage}. ");
-            Health -= finishDamage;
-
-            Console.Write($"Остаток жизни: ");
-            UserUtils.WriteLine($"{Health}", ConsoleColor.Green);
-
-            if (Health < 0)
-            {
-                UserUtils.WriteLine($"Боец {Name} погиб", ConsoleColor.Red);
-            }
-        }
-
-        public virtual Fighter Clone(string squadName)
-        {
-            return new Fighter(squadName, MinDamage, MaxDamage, Armor, Health);
+            return new Fish(Name, MaxLife);
         }
     }
 
-    public class FighterDoubleDamage : Fighter
+    public class FishFactory
     {
-        private readonly int _damageMultiplier;
+        private readonly List<Fish> _availableFish = new();
 
-        public FighterDoubleDamage(string name, int minDamage, int maxDamage, int armor, int health, int damageMultiplier)
-            : base(name, minDamage, maxDamage, armor, health)
+        public FishFactory()
         {
-            _damageMultiplier = damageMultiplier;
+            _availableFish.Add(new Fish("Обычная", maxLife: 5));
+            _availableFish.Add(new Fish("Петушок", maxLife: 3));
+            _availableFish.Add(new Fish("Сомик-прилипала", maxLife: 15));
+            _availableFish.Add(new Fish("Золотая рыбка", maxLife: 10));
         }
 
-        public override void ShowInfo()
+        public Fish CreateRandomFish()
         {
-            UserUtils.Write($"{Name}, урон x{_damageMultiplier}", ConsoleColor.DarkYellow);
-        }
-
-        public override void Attack(IPullFighterSquad targetSquad)
-        {
-            var fighterTarget = targetSquad.GetRandomAliveFighter();
-
-            var damage = UserUtils.GenerateRandomNumber(MinDamage, MaxDamage);
-            damage *= _damageMultiplier;
-            UserUtils.WriteLine($"\nУдар! {Name}: Урон x{_damageMultiplier}: {damage}", ConsoleColor.DarkRed);
-
-            fighterTarget.TakeDamage(damage);
-        }
-
-        public override Fighter Clone(string squadName)
-        {
-            return new FighterDoubleDamage(squadName, MinDamage, MaxDamage, Armor, Health, _damageMultiplier);
-        }
-    }
-
-    public class FighterMultipleDifferentHit : Fighter
-    {
-        private readonly int _attacksCountPerRound;
-
-        public FighterMultipleDifferentHit(string name, int minDamage, int maxDamage, int armor, int health, int attacksCountPerRound)
-            : base(name, minDamage, maxDamage, armor, health)
-        {
-            _attacksCountPerRound = attacksCountPerRound;
-        }
-
-        public override void ShowInfo()
-        {
-            UserUtils.Write($"{Name}, множественная атака всегда разных целей", ConsoleColor.DarkRed);
-        }
-        
-        public override void Attack(IPullFighterSquad targetSquad)
-        {
-            var fightersTargetsAlreadyHit = new HashSet<Fighter>();
-
-            for (int i = 0; i < _attacksCountPerRound; i++)
-            {
-                var attackCountText = $"Множественная атака #{i + 1}";
-
-                if (targetSquad.TryGetRandomAliveFighterExcept(fightersTargetsAlreadyHit, out var fighterTarget) == false)
-                {
-                    UserUtils.WriteLine($"\nПопытка удара! {Name}: {attackCountText}: нет цели для удара!", ConsoleColor.Cyan);
-                    return;
-                }
-            
-                var damage = UserUtils.GenerateRandomNumber(MinDamage, MaxDamage);
-                UserUtils.WriteLine($"\nУдар! {Name}: {attackCountText}: {damage}", ConsoleColor.DarkRed);
-
-                fighterTarget.TakeDamage(damage);
-                fightersTargetsAlreadyHit.Add(fighterTarget);
-            }
-        }
-
-        public override Fighter Clone(string squadName)
-        {
-            return new FighterMultipleDifferentHit(squadName, MinDamage, MaxDamage, Armor, Health, _attacksCountPerRound);
-        }
-    }
-
-    public class FighterMultipleHit : Fighter
-    {
-        private readonly int _attacksCountPerRound;
-
-        public FighterMultipleHit(string name, int minDamage, int maxDamage, int armor, int health, int attacksCountPerRound)
-            : base(name, minDamage, maxDamage, armor, health)
-        {
-            _attacksCountPerRound = attacksCountPerRound;
-        }
-
-        public override void ShowInfo()
-        {
-            UserUtils.Write($"{Name}, множественная атака в т.ч. одной цели", ConsoleColor.DarkCyan);
-        }
-
-        public override void Attack(IPullFighterSquad targetSquad)
-        {
-            for (int i = 0; i < _attacksCountPerRound; i++)
-            {
-                if (targetSquad.IsAlive == false)
-                {
-                    return;
-                }
-
-                var fighterTarget = targetSquad.GetRandomAliveFighter();
-
-                var damage = UserUtils.GenerateRandomNumber(MinDamage, MaxDamage);
-                UserUtils.WriteLine($"\nУдар! {Name}: Множественная атака #{i + 1}: {damage}", ConsoleColor.DarkRed);
-
-                fighterTarget.TakeDamage(damage);
-            }
-        }
-
-        public override Fighter Clone(string squadName)
-        {
-            return new FighterMultipleHit(squadName, MinDamage, MaxDamage, Armor, Health, _attacksCountPerRound);
-        }
-    }
-
-    public class FightersFactory
-    {
-        private readonly List<Fighter> _availableFighters = new List<Fighter>();
-
-        public FightersFactory()
-        {
-            _availableFighters.Add(new Fighter(default, minDamage: 15, maxDamage: 20, armor: 10, health: 100));
-            _availableFighters.Add(new FighterDoubleDamage(default, minDamage: 15, maxDamage: 20, armor: 10, health: 100, damageMultiplier: 2));
-            _availableFighters.Add(new FighterMultipleDifferentHit(default, minDamage: 15, maxDamage: 20, armor: 10, health: 100, attacksCountPerRound: 2));
-            _availableFighters.Add(new FighterMultipleHit(default, minDamage: 15, maxDamage: 20, armor: 10, health: 100, attacksCountPerRound: 2));
-        }
-
-        public Fighter GetRandomFighter(string squadName)
-        {
-            var fighterTypeIndex = UserUtils.GenerateRandomNumber(_availableFighters.Count - 1);
-            var fighterPrefab = _availableFighters[fighterTypeIndex];
-            return fighterPrefab.Clone(squadName);
+            var index = UserUtils.GenerateRandomNumber(_availableFish.Count - 1);
+            var fish = _availableFish[index].Clone();
+            return fish;
         }
     }
 
