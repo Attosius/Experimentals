@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace IJuniorTasks
+namespace IJuniorTasks610
 {
     internal class Program
     {
-        static void Main(string[] args)
+        static void Main610(string[] args)
         {
             var administrator = new Administrator();
             administrator.Run();
@@ -14,7 +14,9 @@ namespace IJuniorTasks
 
     public enum Commands
     {
-        GotoEnclosure = 1,
+        AddDay = 1,
+        AddFish,
+        GetFish,
         Exit,
     }
 
@@ -23,15 +25,17 @@ namespace IJuniorTasks
         public void Run()
         {
             bool isWork = true;
-            var zoo = new Zoo();
+            var aquarium = new Aquarium();
 
             while (isWork)
             {
                 Console.Clear();
-                zoo.PaintStats();
+                aquarium.PaintStats();
 
                 Console.WriteLine($"\n\nВведите команду:");
-                Console.WriteLine($"{(int)Commands.GotoEnclosure}. Потойти к вольеру");
+                Console.WriteLine($"{(int)Commands.AddDay}. Прожить день");
+                Console.WriteLine($"{(int)Commands.AddFish}. Добавить рыбку");
+                Console.WriteLine($"{(int)Commands.GetFish}. Достать рыбку");
                 Console.WriteLine($"{(int)Commands.Exit}. Выход");
                 Console.WriteLine();
 
@@ -46,16 +50,16 @@ namespace IJuniorTasks
                 switch (commandEnum)
                 {
 
-                    case Commands.GotoEnclosure:
-                        zoo.AddDay();
+                    case Commands.AddDay:
+                        aquarium.AddDay();
                         break;
 
                     case Commands.AddFish:
-                        zoo.AddFish();
+                        aquarium.AddFish();
                         break;
 
                     case Commands.GetFish:
-                        zoo.GetFish();
+                        aquarium.GetFish();
                         break;
 
                     case Commands.Exit:
@@ -70,14 +74,14 @@ namespace IJuniorTasks
         }
     }
 
-    public class Zoo
+    public class Aquarium
     {
         public const int MaxFish = 10;
 
         private readonly List<Fish> _fish = new();
         private readonly FishFactory _fishFactory;
 
-        public Zoo()
+        public Aquarium()
         {
             _fishFactory = new FishFactory();
         }
