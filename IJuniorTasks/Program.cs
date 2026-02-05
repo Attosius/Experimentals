@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace IJuniorTasks
 {
@@ -24,6 +25,8 @@ namespace IJuniorTasks
         {
             bool isWork = true;
             var zoo = new Zoo();
+            Stopwatch sw = Stopwatch.StartNew();
+            sw.Stop();
 
             while (isWork)
             {
@@ -49,15 +52,7 @@ namespace IJuniorTasks
                     case Commands.GotoEnclosure:
                         zoo.AddDay();
                         break;
-
-                    case Commands.AddFish:
-                        zoo.AddFish();
-                        break;
-
-                    case Commands.GetFish:
-                        zoo.GetFish();
-                        break;
-
+                        
                     case Commands.Exit:
                         isWork = false;
                         break;
