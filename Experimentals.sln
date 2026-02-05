@@ -20,7 +20,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		.editorconfig = .editorconfig
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ButtonsMonitor", "ButtonsMonitor\ButtonsMonitor.csproj", "{A73861CB-E501-4B05-8B7C-BB68C27B2EB7}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ButtonsMonitor", "ButtonsMonitor\ButtonsMonitor.csproj", "{A73861CB-E501-4B05-8B7C-BB68C27B2EB7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tgbot", "Tgbot\Tgbot.csproj", "{B9706C86-53AE-4DC2-83C1-2D11AE5608B0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TelegramClient", "TelegramClient\TelegramClient.csproj", "{695CE1BA-117D-4705-8D78-01C39C884C98}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -56,6 +60,14 @@ Global
 		{A73861CB-E501-4B05-8B7C-BB68C27B2EB7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A73861CB-E501-4B05-8B7C-BB68C27B2EB7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A73861CB-E501-4B05-8B7C-BB68C27B2EB7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B9706C86-53AE-4DC2-83C1-2D11AE5608B0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B9706C86-53AE-4DC2-83C1-2D11AE5608B0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B9706C86-53AE-4DC2-83C1-2D11AE5608B0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B9706C86-53AE-4DC2-83C1-2D11AE5608B0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{695CE1BA-117D-4705-8D78-01C39C884C98}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{695CE1BA-117D-4705-8D78-01C39C884C98}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{695CE1BA-117D-4705-8D78-01C39C884C98}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{695CE1BA-117D-4705-8D78-01C39C884C98}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
