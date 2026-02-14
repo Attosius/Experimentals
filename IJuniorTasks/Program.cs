@@ -16,7 +16,7 @@ namespace IJuniorTasks
 
     public enum Commands
     {
-        VisitEnclosure = 1,
+        GotoEnclosure = 1,
         Exit,
     }
 
@@ -30,10 +30,10 @@ namespace IJuniorTasks
             while (isWork)
             {
                 Console.Clear();
-                zoo.ShowMenu();
+                zoo.PaintStats();
 
                 Console.WriteLine($"\n\nВведите команду:");
-                Console.WriteLine($"{(int)Commands.VisitEnclosure}. Подойти к вольеру");
+                Console.WriteLine($"{(int)Commands.GotoEnclosure}. Подойти к вольеру");
                 Console.WriteLine($"{(int)Commands.Exit}. Выход");
                 Console.WriteLine();
 
@@ -48,7 +48,7 @@ namespace IJuniorTasks
 
                 switch (commandEnum)
                 {
-                    case Commands.VisitEnclosure:
+                    case Commands.GotoEnclosure:
                         zoo.VisitEnclosure();
                         break;
 
@@ -75,7 +75,7 @@ namespace IJuniorTasks
             _enclosures = _enclosureFactory.CreateAllEnclosures();
         }
 
-        public void ShowMenu()
+        public void PaintStats()
         {
             Console.WriteLine("=== ЗООПАРК ===");
             Console.WriteLine("Доступные вольеры:");
@@ -103,6 +103,24 @@ namespace IJuniorTasks
 
             var enclosure = _enclosures[index - 1];
             enclosure.ShowInfo();
+            
+            Console.WriteLine($"\nВведите номер животного, к которому хотите подойти:");
+            var animalIndexText = Console.ReadLine();
+
+            if (int.TryParse(animalIndexText, out var animalIndex) == false || animalIndex > enclosure.Animals.Count || animalIndex < 1)
+            {
+                Console.WriteLine($"Некорректный номер животного!");
+                Console.ReadKey();
+                return;
+            }
+
+            var animal = enclosure.Animals[animalIndex - 1];
+            Console.WriteLine();
+            Console.Write($"Вы подошли к ");
+            UserUtils.Write($"{animal.Name}", ConsoleColor.Cyan);
+            Console.WriteLine($".");
+            Console.Write($"{animal.Name} издал звук: ");
+            UserUtils.WriteLine($"\"{animal.Sound}\"", ConsoleColor.Magenta);
             Console.ReadKey();
         }
     }
