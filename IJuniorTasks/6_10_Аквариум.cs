@@ -5,7 +5,7 @@ namespace IJuniorTasks610
 {
     internal class Program
     {
-        static void Main610(string[] args)
+        public static void Main610(string[] args)
         {
             var administrator = new Administrator();
             administrator.Run();

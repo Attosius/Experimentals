@@ -9,10 +9,30 @@
 
   <ItemGroup>
     <Compile Remove="2_6_Конвертер_валют.cs" />
+    <Compile Remove="6_1_Работа со свойствами.cs" />
+    <Compile Remove="6_2_База данных игроков.cs" />
+    <Compile Remove="6_3_Колода карт.cs" />
+    <Compile Remove="6_4_Хранилище книг.cs" />
+    <Compile Remove="6_5_Магазин.cs" />
+    <Compile Remove="6_6 Конфигуратор пассажирских поездов.cs" />
+    <Compile Remove="6_7 Коллизей гладиаторов.cs" />
+    <Compile Remove="6_8_Супермаркет.cs" />
+    <Compile Remove="6_9_ВойнаВзводов.cs" />
+    <Compile Remove="ProgramPrepare.cs" />
   </ItemGroup>
 
   <ItemGroup>
     <None Include="2_6_Конвертер_валют.cs" />
+    <None Include="6_1_Работа со свойствами.cs" />
+    <None Include="6_2_База данных игроков.cs" />
+    <None Include="6_3_Колода карт.cs" />
+    <None Include="6_4_Хранилище книг.cs" />
+    <None Include="6_5_Магазин.cs" />
+    <None Include="6_6 Конфигуратор пассажирских поездов.cs" />
+    <None Include="6_7 Коллизей гладиаторов.cs" />
+    <None Include="6_8_Супермаркет.cs" />
+    <None Include="6_9_ВойнаВзводов.cs" />
+    <None Include="ProgramPrepare.cs" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,13 +1,11 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 
-namespace IJuniorTasks
+namespace IJuniorTasks611
 {
-  
     internal class Program
     {
-        public static void Main(string[] args)
+        public static void Main611(string[] args)
         {
             var administrator = new Administrator();
             administrator.Run();
@@ -66,13 +64,21 @@ namespace IJuniorTasks
 
     public class Zoo
     {
-        private readonly List<Enclosure> _enclosures;
+        private readonly List<Enclosure> _enclosures = new();
         private readonly EnclosureFactory _enclosureFactory;
 
         public Zoo()
         {
             _enclosureFactory = new EnclosureFactory();
-            _enclosures = _enclosureFactory.CreateAllEnclosures();
+            InitializeEnclosures();
+        }
+
+        private void InitializeEnclosures()
+        {
+            _enclosures.Add(_enclosureFactory.CreateLionEnclosure());
+            _enclosures.Add(_enclosureFactory.CreateElephantEnclosure());
+            _enclosures.Add(_enclosureFactory.CreateMonkeyEnclosure());
+            _enclosures.Add(_enclosureFactory.CreatePenguinEnclosure());
         }
 
         public void ShowMenu()
@@ -160,17 +166,6 @@ namespace IJuniorTasks
 
     public class EnclosureFactory
     {
-        public List<Enclosure> CreateAllEnclosures()
-        {
-            return new List<Enclosure>
-            {
-                CreateLionEnclosure(),
-                CreateElephantEnclosure(),
-                CreateMonkeyEnclosure(),
-                CreatePenguinEnclosure()
-            };
-        }
-
         public Enclosure CreateLionEnclosure()
         {
             var animals = new List<Animal>
