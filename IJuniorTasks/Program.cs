@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 
 namespace IJuniorTasks
 {
@@ -85,7 +84,7 @@ namespace IJuniorTasks
                 var enclosure = _enclosures[i];
                 Console.Write($"{i + 1}. ");
                 UserUtils.Write($"{enclosure.Name}", ConsoleColor.Green);
-                Console.WriteLine($" ({enclosure.Animals.Count} животных)");
+                Console.WriteLine($" ({enclosure.Count} животных)");
             }
         }
 
@@ -107,14 +106,14 @@ namespace IJuniorTasks
             Console.WriteLine($"\nВведите номер животного, к которому хотите подойти:");
             var animalIndexText = Console.ReadLine();
 
-            if (int.TryParse(animalIndexText, out var animalIndex) == false || animalIndex > enclosure.Animals.Count || animalIndex < 1)
+            if (int.TryParse(animalIndexText, out var animalIndex) == false || animalIndex > enclosure.Count || animalIndex < 1)
             {
                 Console.WriteLine($"Некорректный номер животного!");
                 Console.ReadKey();
                 return;
             }
 
-            var animal = enclosure.Animals[animalIndex - 1];
+            var animal = enclosure.GetAnimalByIndex(animalIndex - 1);
             Console.WriteLine();
             Console.Write($"Вы подошли к ");
             UserUtils.Write($"{animal.Name}", ConsoleColor.Cyan);
@@ -127,25 +126,33 @@ namespace IJuniorTasks
 
     public class Enclosure
     {
+        private readonly List<Animal> _animals;
+
         public Enclosure(string name, List<Animal> animals)
         {
             Name = name;
-            Animals = animals;
+            _animals = animals;
         }
 
         public string Name { get; }
-        public List<Animal> Animals { get; }
+
+        public int Count => _animals.Count;
+
+        public Animal GetAnimalByIndex(int index)
+        {
+            return _animals[index];
+        }
 
         public void ShowInfo()
         {
             Console.Clear();
             Console.WriteLine($"=== Вольер: {Name} ===");
-            Console.WriteLine($"Количество животных: {Animals.Count}");
+            Console.WriteLine($"Количество животных: {Count}");
             Console.WriteLine();
 
-            for (int i = 0; i < Animals.Count; i++)
+            for (int i = 0; i < Count; i++)
             {
-                var animal = Animals[i];
+                var animal = GetAnimalByIndex(i);
                 Console.Write($"{i + 1}. ");
                 UserUtils.Write($"{animal.Name}", ConsoleColor.Cyan);
                 Console.Write($", пол: ");
@@ -193,7 +200,7 @@ namespace IJuniorTasks
         {
             var animals = new List<Animal>
             {
-                new Animal("Лев", Gender.Самец, "Рррр!"),
+                new ("Лев", Gender.Самец, "Рррр!"),
                 new Animal("Львица", Gender.Самка, "Рррр!"),
                 new Animal("Левёнок", Gender.Самец, "Мяу!")
             };
@@ -216,7 +223,7 @@ namespace IJuniorTasks
             var animals = new List<Animal>
             {
                 new Animal("Обезьяна", Gender.Самка, "У-у-у-а!"),
-                new Animal("Шимпанзе", Gender.Самец, "У-у-у-а!"),
+                new Animal("Шимпанзе", Gender.Самец, "У-у-уу-а!"),
                 new Animal("Мартышка", Gender.Самка, "И-и-и!"),
                 new Animal("Горилла", Gender.Самец, "Хррр!")
             };
