@@ -1,12 +1,11 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
-
-namespace IJuniorTasks
+namespace IJuniorTasks613
 {
     internal class Program
     {
-        public static void Main(string[] args)
+        public static void Main613(string[] args)
         {
             var administrator = new Administrator();
             administrator.Run();
@@ -576,4 +575,3 @@ namespace IJuniorTasks
         }
     }
 }
-
